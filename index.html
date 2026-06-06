@@ -2,11 +2,508 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="refresh" content="0; url=online_nfl.html">
-<title>No Free Lunch</title>
-<script>location.replace('online_nfl.html');</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Come Get Free Lunch · the No Free Lunch game</title>
+<meta name="description" content="A cute little café where the food is free and the learning algorithm always picks up the check. Built on the No Free Lunch theorem.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Shantell+Sans:ital,wght@0,300..800;1,300..700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#fff6e9;
+  --cream2:#ffedd4;
+  --paper:#fffaf2;
+  --ink:#3a2415;
+  --ink-soft:#7a5c43;
+  --tomato:#ff5a4d;
+  --tomato-d:#e23b2e;
+  --blueberry:#4a82ff;
+  --blueberry-d:#2f63e0;
+  --mustard:#ffb627;
+  --pickle:#5fc26a;
+  --line:#ecd9bb;
+  --disp:'Bagel Fat One', system-ui, sans-serif;
+  --body:'Shantell Sans', system-ui, sans-serif;
+  --mono:'Space Mono', monospace;
+  --shadow: 5px 5px 0 var(--ink);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--body);
+  color:var(--ink);
+  background-color:var(--cream);
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255,90,77,.045) 0 26px, transparent 26px 52px),
+    repeating-linear-gradient(90deg, rgba(255,90,77,.045) 0 26px, transparent 26px 52px),
+    radial-gradient(120% 80% at 50% -10%, rgba(255,182,39,.18), transparent 60%);
+  min-height:100vh;
+  overflow-x:hidden;
+  line-height:1.55;
+}
+/* paper grain */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:60;opacity:.5;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
+}
+
+/* ---------- nav ---------- */
+.nav{
+  position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px clamp(16px,5vw,48px);
+  background:rgba(255,246,233,.82);backdrop-filter:blur(8px);
+  border-bottom:2.5px solid var(--ink);
+}
+.brand{display:flex;align-items:center;gap:9px;font-family:var(--disp);font-size:18px;letter-spacing:.2px}
+.brand .pin{
+  display:grid;place-items:center;width:34px;height:34px;border-radius:11px;
+  background:var(--mustard);border:2.5px solid var(--ink);box-shadow:2.5px 2.5px 0 var(--ink);
+  font-size:17px;transform:rotate(-6deg);
+}
+.nav-links{display:flex;gap:22px;align-items:center}
+.nav-links a{color:var(--ink);text-decoration:none;font-weight:600;font-size:14.5px}
+.nav-links a:hover{color:var(--tomato-d)}
+.nav-links .ghpill{
+  font-family:var(--mono);font-size:12px;font-weight:700;
+  padding:6px 12px;border:2.5px solid var(--ink);border-radius:999px;background:var(--paper);
+  box-shadow:2.5px 2.5px 0 var(--ink);
+}
+.nav-links .ghpill:hover{transform:translate(-1px,-1px);box-shadow:3.5px 3.5px 0 var(--ink)}
+@media(max-width:640px){.nav-links .hide-sm{display:none}}
+
+/* ---------- hero ---------- */
+.hero{
+  max-width:1180px;margin:0 auto;
+  padding:clamp(36px,7vw,80px) clamp(16px,5vw,48px) 40px;
+  display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(28px,5vw,64px);align-items:center;
+}
+@media(max-width:860px){.hero{grid-template-columns:1fr;text-align:center}}
+
+.badge{
+  display:inline-flex;align-items:center;gap:8px;
+  font-weight:700;font-size:13.5px;
+  background:var(--pickle);color:#0f3d1c;
+  border:2.5px solid var(--ink);border-radius:999px;padding:7px 15px;
+  box-shadow:3px 3px 0 var(--ink);
+  transform:rotate(-2deg);
+  animation:wiggle 3.2s ease-in-out infinite;
+}
+@keyframes wiggle{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2.5deg)}}
+
+.eyebrow{
+  font-family:var(--body);font-style:italic;font-weight:600;
+  color:var(--tomato-d);font-size:clamp(20px,3.4vw,30px);
+  margin:18px 0 -2px;letter-spacing:.3px;
+}
+h1.wordmark{
+  font-family:var(--disp);font-weight:400;
+  font-size:clamp(52px,11vw,116px);line-height:.86;
+  letter-spacing:-1px;color:var(--ink);
+  text-shadow:4px 4px 0 var(--tomato), 4px 4px 0 var(--tomato);
+  margin-bottom:6px;
+}
+h1.wordmark .ltr{display:inline-block;animation:drop .62s cubic-bezier(.34,1.56,.64,1) backwards}
+@keyframes drop{0%{transform:translateY(46px) rotate(-8deg) scale(.6);opacity:0}100%{transform:none;opacity:1}}
+.sammy{display:inline-block;animation:bob 2.6s ease-in-out infinite;transform-origin:bottom center}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-10px) rotate(6deg)}}
+
+.tagline{
+  font-size:clamp(16px,2vw,19px);color:var(--ink-soft);font-weight:500;
+  max-width:30ch;margin:14px 0 0;
+}
+@media(max-width:860px){.tagline{margin-inline:auto}}
+.tagline b{color:var(--ink);font-weight:700}
+
+.cta-row{display:flex;flex-wrap:wrap;gap:14px;margin-top:30px}
+@media(max-width:860px){.cta-row{justify-content:center}}
+.btn{
+  display:inline-flex;align-items:center;gap:10px;
+  font-family:var(--disp);font-size:18px;
+  text-decoration:none;color:var(--ink);
+  padding:14px 22px;border:3px solid var(--ink);border-radius:16px;
+  box-shadow:var(--shadow);transition:transform .12s ease, box-shadow .12s ease;
+  cursor:pointer;
+}
+.btn:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 var(--ink)}
+.btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
+.btn.primary{background:var(--tomato);color:#fff}
+.btn.secondary{background:var(--paper)}
+.btn .arrow{transition:transform .15s ease}
+.btn:hover .arrow{transform:translateX(4px)}
+
+.fineprint{margin-top:16px;font-size:13px;color:var(--ink-soft);font-style:italic}
+.fineprint code{font-family:var(--mono);background:var(--cream2);padding:1px 6px;border-radius:5px;border:1.5px solid var(--line)}
+
+/* ---------- tray (interactive) ---------- */
+.hero-visual{display:flex;justify-content:center}
+.tray{
+  width:min(420px,92vw);
+  background:var(--paper);
+  border:3px solid var(--ink);border-radius:22px;
+  box-shadow:8px 10px 0 var(--ink);
+  padding:16px;transform:rotate(-2.2deg);
+  transition:transform .25s ease;
+  position:relative;
+}
+.tray:hover{transform:rotate(0deg)}
+.tray::after{
+  content:'TRAY #NFL';position:absolute;right:14px;top:-15px;
+  font-family:var(--mono);font-size:11px;font-weight:700;color:var(--ink);
+  background:var(--mustard);border:2.5px solid var(--ink);border-radius:8px;padding:3px 9px;
+  transform:rotate(4deg);box-shadow:2px 2px 0 var(--ink);
+}
+.tray-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.tray-head .dot{width:12px;height:12px;border-radius:50%;border:2px solid var(--ink)}
+.tray-title{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+#tray{width:100%;aspect-ratio:1;border:2.5px solid var(--ink);border-radius:14px;background:#fffdf8;display:block;cursor:crosshair}
+.tray-tools{display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap}
+.food-btn{
+  font-family:var(--body);font-weight:700;font-size:14px;
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 12px;border:2.5px solid var(--ink);border-radius:11px;background:var(--paper);
+  cursor:pointer;box-shadow:2.5px 2.5px 0 var(--ink);transition:transform .1s,box-shadow .1s;
+}
+.food-btn:hover{transform:translate(-1px,-1px);box-shadow:3.5px 3.5px 0 var(--ink)}
+.food-btn.on.tom{background:var(--tomato);color:#fff}
+.food-btn.on.blu{background:var(--blueberry);color:#fff}
+.food-btn.clear{margin-left:auto;font-family:var(--mono);font-size:12px}
+.tray-cap{margin-top:11px;font-size:12.5px;color:var(--ink-soft);line-height:1.45;font-style:italic}
+.tray-cap b{color:var(--ink);font-style:normal}
+
+/* ---------- section frame ---------- */
+.sec{max-width:1100px;margin:0 auto;padding:clamp(40px,7vw,84px) clamp(16px,5vw,48px)}
+.sec-tag{
+  display:inline-block;font-family:var(--mono);font-size:12.5px;font-weight:700;
+  color:var(--blueberry-d);background:#e7efff;border:2px solid var(--blueberry);
+  padding:4px 12px;border-radius:999px;transform:rotate(-1.5deg);margin-bottom:14px;
+}
+.sec h2{font-family:var(--disp);font-size:clamp(30px,5.4vw,52px);line-height:.95;margin-bottom:6px}
+.sec .sub{color:var(--ink-soft);font-size:16px;font-weight:500;margin-bottom:30px}
+
+/* ---------- menu ---------- */
+.menu-card{
+  background:var(--paper);border:3px solid var(--ink);border-radius:22px;
+  box-shadow:var(--shadow);padding:clamp(20px,4vw,38px);
+  background-image:radial-gradient(circle at 12px 12px, rgba(58,36,21,.05) 2px, transparent 2px);
+  background-size:24px 24px;
+}
+.menu-item{
+  display:block;text-decoration:none;color:inherit;
+  padding:18px 4px;border-bottom:2.5px dashed var(--line);position:relative;
+  transition:transform .14s ease;
+}
+.menu-item:last-child{border-bottom:0}
+.menu-item:hover{transform:translateX(6px)}
+.mi-top{display:flex;align-items:baseline;gap:10px}
+.mi-emoji{font-size:26px;line-height:1}
+.mi-name{font-family:var(--disp);font-size:clamp(20px,3.2vw,27px);white-space:nowrap}
+.mi-lead{flex:1;border-bottom:3px dotted var(--line);transform:translateY(-4px)}
+.mi-price{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--tomato-d);white-space:nowrap}
+.mi-desc{color:var(--ink-soft);font-size:14.5px;margin-top:4px;max-width:62ch}
+.mi-go{font-weight:700;color:var(--blueberry-d);font-size:14px}
+.menu-item:hover .mi-go{text-decoration:underline}
+.mi-tag{font-family:var(--mono);font-size:10.5px;font-weight:700;border:2px solid var(--ink);border-radius:6px;padding:1px 7px;margin-left:8px;vertical-align:3px}
+.mi-tag.hot{background:var(--tomato);color:#fff}
+.mi-tag.new{background:var(--pickle);color:#0f3d1c}
+
+/* ---------- the catch (receipt) ---------- */
+.catch{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(24px,5vw,56px);align-items:center}
+@media(max-width:820px){.catch{grid-template-columns:1fr}}
+.catch p{font-size:clamp(16px,2.1vw,19px);color:var(--ink);margin-bottom:14px}
+.catch p .hl{background:linear-gradient(transparent 55%, var(--mustard) 55%);padding:0 2px;font-weight:700}
+.catch .rr{color:var(--tomato-d);font-weight:700}
+.catch .bb{color:var(--blueberry-d);font-weight:700}
+
+.receipt{
+  background:var(--paper);font-family:var(--mono);color:var(--ink);
+  padding:24px 22px 28px;width:min(340px,90vw);margin:0 auto;
+  box-shadow:6px 6px 0 rgba(58,36,21,.18);
+  position:relative;
+  --zig:9px;
+  border-left:2px dashed var(--line);border-right:2px dashed var(--line);
+  background-image:
+    linear-gradient(45deg, transparent 33.3%, var(--paper) 33.3%),
+    linear-gradient(-45deg, transparent 33.3%, var(--paper) 33.3%);
+}
+.receipt::before,.receipt::after{
+  content:'';position:absolute;left:0;right:0;height:11px;
+  background:
+    linear-gradient(-45deg, var(--cream) 6px, transparent 0) 0 0/12px 12px repeat-x,
+    linear-gradient(45deg, var(--cream) 6px, transparent 0) 0 0/12px 12px repeat-x;
+}
+.receipt::before{top:-10px;transform:scaleY(-1)}
+.receipt::after{bottom:-10px}
+.receipt h3{font-family:var(--mono);font-weight:700;font-size:14px;text-align:center;letter-spacing:1px;margin-bottom:4px}
+.receipt .r-sub{text-align:center;font-size:10.5px;color:var(--ink-soft);margin-bottom:16px}
+.r-line{display:flex;justify-content:space-between;font-size:12.5px;padding:5px 0;border-bottom:1px dotted var(--line)}
+.r-total{display:flex;justify-content:space-between;font-weight:700;font-size:14px;margin-top:12px;padding-top:10px;border-top:2px solid var(--ink)}
+.r-total .pay{color:var(--tomato-d)}
+.r-stamp{
+  margin-top:16px;text-align:center;color:var(--tomato-d);
+  border:2.5px solid var(--tomato-d);border-radius:8px;padding:6px;font-weight:700;font-size:12px;
+  transform:rotate(-4deg);opacity:.85;
+}
+
+/* ---------- bites ---------- */
+.bites-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media(max-width:760px){.bites-grid{grid-template-columns:1fr}}
+.bite{
+  background:var(--paper);border:3px solid var(--ink);border-radius:18px;padding:22px;
+  box-shadow:var(--shadow);position:relative;
+}
+.bite .num{
+  position:absolute;top:-16px;left:18px;width:34px;height:34px;border-radius:50%;
+  display:grid;place-items:center;font-family:var(--disp);font-size:17px;
+  background:var(--blueberry);color:#fff;border:2.5px solid var(--ink);box-shadow:2.5px 2.5px 0 var(--ink);
+}
+.bite .be{font-size:34px;display:block;margin:6px 0 8px}
+.bite h4{font-family:var(--disp);font-size:20px;margin-bottom:5px}
+.bite p{color:var(--ink-soft);font-size:14.5px}
+
+/* ---------- final cta ---------- */
+.final{text-align:center;padding-bottom:90px}
+.final h2{font-family:var(--disp);font-size:clamp(32px,6vw,60px);line-height:.95;margin-bottom:18px}
+.final .sammy-big{font-size:clamp(46px,9vw,84px);display:inline-block;animation:bob 2.6s ease-in-out infinite}
+
+/* ---------- footer ---------- */
+footer{
+  border-top:2.5px solid var(--ink);background:var(--cream2);
+  padding:26px clamp(16px,5vw,48px);
+  display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;
+}
+footer .f-made{font-weight:600;font-size:14px}
+footer .f-thm{font-family:var(--mono);font-size:12px;color:var(--ink-soft);background:var(--paper);border:2px solid var(--line);border-radius:8px;padding:5px 11px}
+footer a{color:var(--tomato-d);font-weight:700;text-decoration:none}
+footer a:hover{text-decoration:underline}
+
+/* floating doodles */
+.doodle{position:absolute;pointer-events:none;user-select:none;opacity:.9;z-index:0;font-size:34px}
+.d1{top:120px;left:4%;animation:bob 4s ease-in-out infinite}
+.d2{top:230px;right:6%;animation:bob 5s ease-in-out infinite .6s}
+.d3{top:60px;right:18%;animation:wiggle 4s ease-in-out infinite;font-size:26px}
+@media(max-width:860px){.doodle{display:none}}
+
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
 </head>
 <body>
-<p>Loading the game… if you are not redirected, <a href="online_nfl.html">click here</a>.</p>
+
+<nav class="nav">
+  <div class="brand"><span class="pin">🥪</span> Free&nbsp;Lunch&nbsp;Café</div>
+  <div class="nav-links">
+    <a href="#menu" class="hide-sm">Menu</a>
+    <a href="#catch" class="hide-sm">The catch</a>
+    <a class="ghpill" href="https://github.com/invariance3/GetFreeLunch" target="_blank" rel="noopener">★ source</a>
+  </div>
+</nav>
+
+<main style="position:relative">
+  <span class="doodle d1">🍟</span>
+  <span class="doodle d2">🍪</span>
+  <span class="doodle d3">🧃</span>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-copy">
+      <span class="badge">🟢 OPEN · all you can eat*</span>
+      <div class="eyebrow">come &amp; get your</div>
+      <h1 class="wordmark" id="wordmark">FREE&nbsp;LUNCH <span class="sammy">🥪</span></h1>
+      <p class="tagline">Pull up a tray at the café where the food is free — and the <b>learning algorithm</b> always picks up the check.</p>
+      <div class="cta-row">
+        <a class="btn primary" href="online_nfl.html">Grab a tray <span class="arrow">→</span></a>
+        <a class="btn secondary" href="no_free_lunch.html">Browse the kitchen</a>
+      </div>
+      <p class="fineprint">*generalization sold separately. <code>∀A ∃f : L(A,f) = chance</code></p>
+    </div>
+
+    <div class="hero-visual">
+      <div class="tray">
+        <div class="tray-head">
+          <span class="dot" style="background:var(--tomato)"></span>
+          <span class="dot" style="background:var(--mustard)"></span>
+          <span class="dot" style="background:var(--pickle)"></span>
+          <span class="tray-title">the cafeteria grid</span>
+        </div>
+        <canvas id="tray"></canvas>
+        <div class="tray-tools">
+          <button class="food-btn tom on" id="b-tom" onclick="setFood('tomato')">🍅 tomato</button>
+          <button class="food-btn blu" id="b-blu" onclick="setFood('blueberry')">🫐 blueberry</button>
+          <button class="food-btn clear" onclick="clearTray()">↺ clear</button>
+        </div>
+        <p class="tray-cap">Drop snacks on the tray — every square joins its <b>nearest</b> bite. <b>That's the whole algorithm</b> (k-nearest-neighbours). Cute, until you trick it.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- MENU -->
+  <section class="sec" id="menu">
+    <span class="sec-tag">TODAY'S MENU</span>
+    <h2>Three ways to eat</h2>
+    <p class="sub">Served daily. Theorem included at no extra charge.</p>
+    <div class="menu-card">
+
+      <a class="menu-item" href="online_nfl.html">
+        <div class="mi-top">
+          <span class="mi-emoji">🥪</span>
+          <span class="mi-name">The House Duel<span class="mi-tag hot">CHEF'S PICK</span></span>
+          <span class="mi-lead"></span>
+          <span class="mi-price">price: ≤ log₂|H| slip-ups</span>
+        </div>
+        <p class="mi-desc">Outwit a learner one bite at a time. It guesses, you serve the truth — and pin it into a corner it can't escape. <span class="mi-go">Sit down →</span></p>
+      </a>
+
+      <a class="menu-item" href="no_free_lunch.html">
+        <div class="mi-top">
+          <span class="mi-emoji">🍳</span>
+          <span class="mi-name">Training Sandbox</span>
+          <span class="mi-lead"></span>
+          <span class="mi-price">price: free refills</span>
+        </div>
+        <p class="mi-desc">The kitchen with the lights on — the true recipe is right on the table. Practice plating data that makes the algorithm choke. <span class="mi-go">Step inside →</span></p>
+      </a>
+
+      <a class="menu-item" href="no_free_lunch.html">
+        <div class="mi-top">
+          <span class="mi-emoji">🍱</span>
+          <span class="mi-name">Hidden-Menu Challenge<span class="mi-tag new">SPICY</span></span>
+          <span class="mi-lead"></span>
+          <span class="mi-price">price: one good hunch</span>
+        </div>
+        <p class="mi-desc">The recipe's a secret — you only get a few tasting samples. Guess what's cooking, then beat it. <span class="mi-go">Take a bite →</span></p>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- THE CATCH -->
+  <section class="sec" id="catch">
+    <div class="catch">
+      <div>
+        <span class="sec-tag" style="color:var(--tomato-d);background:#ffe6e2;border-color:var(--tomato)">THE FINE PRINT</span>
+        <h2>There's no free lunch.</h2>
+        <p style="margin-top:14px">It's not a saying here — it's <span class="hl">an actual theorem</span>. For <b>every</b> learning algorithm, there's a world where it eats dirt.</p>
+        <p>Averaged over all possible worlds, <span class="rr">nobody</span> beats a coin flip. Your job is to <b>cook up that world</b>: arrange the <span class="rr">🍅 tomatoes</span> and <span class="bb">🫐 blueberries</span> so the algorithm guesses wrong, bite after bite.</p>
+        <p>The lunch really is free. <b>Generalization is what costs you</b> — paid in assumptions.</p>
+      </div>
+      <div class="receipt">
+        <h3>·· THE BILL ··</h3>
+        <div class="r-sub">FREE LUNCH CAFÉ — table ∀A</div>
+        <div class="r-line"><span>1 × Lunch</span><span>$0.00</span></div>
+        <div class="r-line"><span>Tray of data</span><span>$0.00</span></div>
+        <div class="r-line"><span>A clever guess</span><span>$0.00</span></div>
+        <div class="r-line"><span>Generalizing it</span><span class="rr">∞</span></div>
+        <div class="r-total"><span>TOTAL</span><span class="pay">the algorithm pays</span></div>
+        <div class="r-stamp">★ NO REFUNDS ON ASSUMPTIONS ★</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BITES -->
+  <section class="sec">
+    <span class="sec-tag">HOW TO EAT</span>
+    <h2>Three bites &amp; you're in</h2>
+    <p class="sub">No reservation needed.</p>
+    <div class="bites-grid">
+      <div class="bite"><span class="num">1</span><span class="be">🍅</span><h4>Set the table</h4><p>Place your snacks on the grid. Each one is a labelled example for the algorithm to chew on.</p></div>
+      <div class="bite"><span class="num">2</span><span class="be">🤖</span><h4>It takes a guess</h4><p>The learner colours every square by its nearest snack — confident, tidy, and ready to be fooled.</p></div>
+      <div class="bite"><span class="num">3</span><span class="be">🎯</span><h4>Make it choke</h4><p>Arrange things so its guess is dead wrong. The worse it does, the better you ate. Bon appétit.</p></div>
+    </div>
+  </section>
+
+  <!-- FINAL -->
+  <section class="sec final">
+    <span class="sammy-big">🥪</span>
+    <h2>Hungry yet?</h2>
+    <a class="btn primary" href="online_nfl.html" style="font-size:22px;padding:16px 30px">Come get free lunch <span class="arrow">→</span></a>
+  </section>
+</main>
+
+<footer>
+  <span class="f-made">Made with 🥪 &amp; the No Free Lunch theorem.</span>
+  <span class="f-thm">∀A ∃f : L(A,f) = chance</span>
+  <a href="https://github.com/invariance3/GetFreeLunch" target="_blank" rel="noopener">view source on GitHub →</a>
+</footer>
+
+<script>
+/* ---- wordmark letter pop-in ---- */
+(function(){
+  const wm = document.getElementById('wordmark');
+  const sammy = wm.querySelector('.sammy');
+  // clear everything except the sandwich, then rebuild as animated letters
+  [...wm.childNodes].forEach(n => { if(n !== sammy) wm.removeChild(n); });
+  const frag = document.createDocumentFragment();
+  let i = 0;
+  'FREE LUNCH'.split(' ').forEach(word => {
+    const w = document.createElement('span');       // keep each word unbreakable
+    w.style.whiteSpace = 'nowrap'; w.style.display = 'inline-block';
+    [...word].forEach(ch => {
+      const s=document.createElement('span');
+      s.className='ltr'; s.textContent=ch;
+      s.style.animationDelay=(0.05*i++)+'s';
+      w.appendChild(s);
+    });
+    frag.appendChild(w);
+    frag.appendChild(document.createTextNode(' '));
+  });
+  wm.insertBefore(frag, sammy);
+})();
+
+/* ---- interactive cafeteria grid (kNN with food) ---- */
+const G = 9;
+const cv = document.getElementById('tray');
+const ctx = cv.getContext('2d');
+let food = 'tomato';
+let pts = [];
+function seed(){ pts = [
+  {r:2,c:2,t:'tomato'},{r:6,c:6,t:'blueberry'},
+  {r:6,c:2,t:'blueberry'},{r:2,c:6,t:'tomato'},{r:4,c:4,t:'tomato'}
+]; }
+function pred(r,c){
+  if(!pts.length) return null;
+  let best=null,bd=1e9;
+  for(const p of pts){ const d=(r-p.r)**2+(c-p.c)**2; if(d<bd){bd=d;best=p;} }
+  return best.t;
+}
+function draw(){
+  const W=cv.width, cs=W/G;
+  ctx.clearRect(0,0,W,W);
+  for(let r=0;r<G;r++) for(let c=0;c<G;c++){
+    const p=pred(r,c);
+    if(p==='tomato') ctx.fillStyle='rgba(255,90,77,0.20)';
+    else if(p==='blueberry') ctx.fillStyle='rgba(74,130,255,0.20)';
+    else ctx.fillStyle='transparent';
+    ctx.fillRect(c*cs,r*cs,cs,cs);
+    ctx.strokeStyle='rgba(58,36,21,0.10)'; ctx.lineWidth=1;
+    ctx.strokeRect(c*cs,r*cs,cs,cs);
+  }
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.font = (cs*0.62)+'px serif';
+  for(const p of pts){
+    ctx.fillText(p.t==='tomato'?'🍅':'🫐', p.c*cs+cs/2, p.r*cs+cs/2+1);
+  }
+}
+function resize(){ const w=cv.clientWidth; cv.width=w; cv.height=w; draw(); }
+cv.addEventListener('click', e=>{
+  const rect=cv.getBoundingClientRect();
+  const cs=cv.width/G;
+  const c=Math.floor((e.clientX-rect.left)*(cv.width/rect.width)/cs);
+  const r=Math.floor((e.clientY-rect.top)*(cv.height/rect.height)/cs);
+  if(r<0||r>=G||c<0||c>=G) return;
+  const i=pts.findIndex(p=>p.r===r&&p.c===c);
+  if(i>=0) pts.splice(i,1); else pts.push({r,c,t:food});
+  draw();
+});
+window.setFood=function(t){
+  food=t;
+  document.getElementById('b-tom').classList.toggle('on', t==='tomato');
+  document.getElementById('b-blu').classList.toggle('on', t==='blueberry');
+};
+window.clearTray=function(){ pts=[]; draw(); };
+window.addEventListener('resize', resize);
+seed(); resize();
+</script>
 </body>
 </html>
