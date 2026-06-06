@@ -1,6 +1,9 @@
 (function () {
   'use strict';
 
+  // Embedded games share the persistent player owned by the landing page.
+  if (window.self !== window.top) return;
+
   const STORAGE_KEY = 'free_lunch_cafe_bgm';
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   if (!AudioContext) return;
@@ -65,12 +68,13 @@
   let nextNoteTime = 0;
   let step = 0;
   let playing = false;
-  let wanted = false;
+  let wanted = true;
+  let unlockArmed = false;
 
   try {
-    wanted = localStorage.getItem(STORAGE_KEY) === 'on';
+    wanted = localStorage.getItem(STORAGE_KEY) !== 'off';
   } catch (error) {
-    wanted = false;
+    wanted = true;
   }
 
   const tempo = 94;
@@ -135,15 +139,14 @@
   }
 
   function updateButton() {
-    button.setAttribute('aria-pressed', playing ? 'true' : 'false');
+    button.setAttribute('aria-pressed', wanted ? 'true' : 'false');
     button.classList.toggle('playing', playing);
-    button.querySelector('.label').textContent = playing ? 'music on' : 'café music';
-    button.querySelector('.notes').textContent = playing ? '♪' : '♫';
+    button.querySelector('.label').textContent = wanted ? 'music on' : 'music off';
+    button.querySelector('.notes').textContent = wanted ? '♪' : '♫';
   }
 
-  function start() {
-    if (playing) return;
-    context = new AudioContext();
+  function beginPlayback() {
+    if (playing || !wanted || !context || context.state !== 'running') return;
     master = context.createGain();
     master.gain.setValueAtTime(0.7, context.currentTime);
     master.connect(context.destination);
@@ -152,9 +155,45 @@
     scheduler();
     timer = window.setInterval(scheduler, 50);
     playing = true;
-    wanted = true;
-    try { localStorage.setItem(STORAGE_KEY, 'on'); } catch (error) {}
+    disarmUnlock();
     updateButton();
+  }
+
+  function unlock(event) {
+    if (button.contains(event.target)) return;
+    start();
+  }
+
+  function armUnlock() {
+    if (unlockArmed || !wanted) return;
+    unlockArmed = true;
+    document.addEventListener('pointerdown', unlock, true);
+    document.addEventListener('keydown', unlock, true);
+  }
+
+  function disarmUnlock() {
+    if (!unlockArmed) return;
+    unlockArmed = false;
+    document.removeEventListener('pointerdown', unlock, true);
+    document.removeEventListener('keydown', unlock, true);
+  }
+
+  function start() {
+    if (!wanted) return;
+    if (!context || context.state === 'closed') context = new AudioContext();
+    if (context.state === 'running') {
+      beginPlayback();
+      return;
+    }
+    const resumed = context.resume();
+    if (resumed && typeof resumed.then === 'function') {
+      resumed.then(function () {
+        if (context && context.state === 'running') beginPlayback();
+        else armUnlock();
+      }).catch(armUnlock);
+    } else {
+      armUnlock();
+    }
   }
 
   function stop() {
@@ -162,6 +201,7 @@
     timer = null;
     playing = false;
     wanted = false;
+    disarmUnlock();
     if (context) context.close();
     context = null;
     master = null;
@@ -170,18 +210,20 @@
   }
 
   button.addEventListener('click', function () {
-    if (playing) stop();
-    else start();
+    if (wanted) {
+      stop();
+    } else {
+      wanted = true;
+      try { localStorage.setItem(STORAGE_KEY, 'on'); } catch (error) {}
+      updateButton();
+      start();
+    }
   });
 
   if (wanted) {
-    const resumeOnGesture = function (event) {
-      if (!playing && wanted && !button.contains(event.target)) start();
-      document.removeEventListener('pointerdown', resumeOnGesture, true);
-      document.removeEventListener('keydown', resumeOnGesture, true);
-    };
-    document.addEventListener('pointerdown', resumeOnGesture, true);
-    document.addEventListener('keydown', resumeOnGesture, true);
+    try { localStorage.setItem(STORAGE_KEY, 'on'); } catch (error) {}
+    start();
+    armUnlock();
   }
 
   updateButton();

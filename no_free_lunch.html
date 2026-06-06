@@ -71,11 +71,14 @@ h1{font-family:var(--disp); font-weight:400; font-size:clamp(22px,3.2vw,30px); l
 .panel-label{font-family:var(--mono); font-size:10px; font-weight:700; color:var(--ink-soft); letter-spacing:.12em; text-transform:uppercase; margin-bottom:12px}
 
 /* ---------- grid / canvas ---------- */
-#grid-wrap{position:relative; width:100%; aspect-ratio:1}
-canvas{display:block; width:100%; height:100%; border-radius:12px; cursor:crosshair}
+#grid-wrap{
+  position:relative; width:100%; aspect-ratio:1; overflow:hidden;
+  border:2.5px solid var(--ink); border-radius:14px; background:#fffdf8;
+}
+canvas{display:block; width:100%; height:100%; border-radius:11px; cursor:crosshair}
 #grid-canvas{position:absolute; top:0; left:0}
 #overlay-canvas{position:absolute; top:0; left:0}
-canvas#board{display:block; width:100%; height:100%; border:2.5px solid var(--ink); border-radius:14px; background:#fffdf8}
+canvas#board{display:block; width:100%; height:100%; background:#fffdf8}
 
 /* ---------- toolbar / buttons ---------- */
 .toolbar{display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap}
@@ -340,7 +343,7 @@ canvas#board{display:block; width:100%; height:100%; border:2.5px solid var(--in
         <div class="legend-row"><span class="food-dot">🫐</span>Blueberry training point</div>
         <div class="legend-row"><div class="dot red" style="opacity:0.4; border:1.5px solid var(--red)"></div>kNN predicts tomato territory</div>
         <div class="legend-row"><div class="dot blue" style="opacity:0.4; border:1.5px solid var(--blue)"></div>kNN predicts blueberry territory</div>
-        <div class="legend-row"><div class="dot" style="background:#fff; width:10px;height:10px; border-radius:50%;"></div>Test point (X = wrong prediction)</div>
+        <div class="legend-row"><span class="food-dot">🍅/🫐</span>Revealed test label (X = wrong prediction)</div>
       </div>
     </div>
 
@@ -465,8 +468,8 @@ function draw() {
         else gc.fillStyle = 'transparent';
         gc.fillRect(x, y, cs, cs);
       }
-      gc.strokeStyle = '#e7d3b0';
-      gc.lineWidth = 0.5;
+      gc.strokeStyle = 'rgba(58,36,21,0.10)';
+      gc.lineWidth = 1;
       gc.strokeRect(x, y, cs, cs);
     }
   }
@@ -482,11 +485,12 @@ function draw() {
   // Hint samples (challenge mode, before reveal)
   if (state.mode === 'challenge' && state.phase !== 'result') {
     for (const h of state.hints) {
-      const x = h.c*cs + cs/2, y = h.r*cs + cs/2, s = cs*0.26;
+      const x = h.c*cs + cs/2, y = h.r*cs + cs/2, s = cs*0.34;
+      drawFood(oc, h.truth, x, y, cs * 0.58);
       oc.save();
       oc.translate(x, y); oc.rotate(Math.PI/4);
       oc.strokeStyle = h.truth === 'red' ? '#ff5a4d' : '#4a82ff';
-      oc.lineWidth = 2.5;
+      oc.lineWidth = 1.5;
       oc.strokeRect(-s, -s, 2*s, 2*s);
       oc.restore();
     }
@@ -501,8 +505,8 @@ function draw() {
       if (!correct) {
         // Draw X
         const s = cs*0.18;
-        oc.strokeStyle = '#ffffff';
-        oc.lineWidth = 2;
+        oc.strokeStyle = '#3a2415';
+        oc.lineWidth = 2.5;
         oc.beginPath(); oc.moveTo(x-s,y-s); oc.lineTo(x+s,y+s); oc.stroke();
         oc.beginPath(); oc.moveTo(x+s,y-s); oc.lineTo(x-s,y+s); oc.stroke();
       }
@@ -577,7 +581,7 @@ function updateModeUI() {
   if (tb) tb.style.display = state.mode === 'challenge' ? 'none' : '';
   const help = document.getElementById('help-text');
   if (help) help.innerHTML = state.mode === 'challenge'
-    ? '<b>f is hidden!</b> ◇ diamonds = known sample points of f. Background = kNN\'s current prediction.<br>Infer the pattern of f from the samples, build an adversarial training set, then submit to reveal your score.'
+    ? '<b>f is hidden!</b> Framed 🍅/🫐 snacks = known sample points of f. Background = kNN\'s current prediction.<br>Infer the pattern of f from the samples, build an adversarial training set, then submit to reveal your score.'
     : 'Background = <b>true function f</b> (your target). Make kNN\'s coloring as <b>opposite</b> to the background as possible —<br>the higher the "live error rate" on the right, the better. Then submit to verify.';
 }
 
@@ -736,7 +740,7 @@ function nextRound() {
   const fn = getCurrentFn();
   if (state.mode === 'challenge') genHints();
   addLog(state.mode === 'challenge'
-    ? `Level ${state.round+1} begins — f is hidden, read the ◇ samples to deduce it`
+    ? `Level ${state.round+1} begins — f is hidden, read the framed snack samples to deduce it`
     : `Level ${state.round+1} begins — true function f = "${fn.name}"`, 'highlight');
   updateRoundDots();
   draw();
@@ -792,7 +796,7 @@ function restartGame() {
   updateRoundDots();
   draw();
   addLog(state.mode === 'challenge'
-    ? 'New game (Challenge mode). f is hidden — read the ◇ samples to deduce it.'
+    ? 'New game (Challenge mode). f is hidden — read the framed snack samples to deduce it.'
     : `New game. True function f = "${getCurrentFn().name}"`, 'highlight');
 }
 
@@ -860,7 +864,7 @@ addLog(`Game start (Training mode). True function f = "${getCurrentFn().name}" �
       title: 'Step 5 · Three ways to play',
       body: "<div class='gm-cards'>"
           + "<div class='gm-card'><div class='gm-h'>🎯 Training</div>f is fully visible. A sandbox to practice building adversarial data with live feedback.</div>"
-          + "<div class='gm-card'><div class='gm-h'>🎲 Challenge</div>f is hidden — you get only a few ◇ sample points. Deduce the pattern, then attack. Live error stays hidden until you submit.</div>"
+          + "<div class='gm-card'><div class='gm-h'>🎲 Challenge</div>f is hidden — you get only a few framed 🍅/🫐 samples. Deduce the pattern, then attack. Live error stays hidden until you submit.</div>"
           + "<div class='gm-card'><div class='gm-h'>⚔️ Online NFL</div>A turn-by-turn duel: the learner predicts, you reveal the true label. f is constrained to a hypothesis class, so it's a real puzzle (Littlestone dimension).</div>"
           + "</div>"
     },
@@ -909,7 +913,7 @@ addLog(`Game start (Training mode). True function f = "${getCurrentFn().name}" �
         ctx.fillStyle = p==='red' ? 'rgba(255,90,77,0.16)' : 'rgba(74,130,255,0.16)';
         ctx.fillRect(x,y,cs,cs);
       }
-      ctx.strokeStyle = '#e7d3b0'; ctx.lineWidth = 0.5; ctx.strokeRect(x,y,cs,cs);
+      ctx.strokeStyle = 'rgba(58,36,21,0.10)'; ctx.lineWidth = 1; ctx.strokeRect(x,y,cs,cs);
       if (s.marks && hasPts){
         const p = mgPredict(r,c,mg.k);
         if (p && p !== mgF(r,c)){

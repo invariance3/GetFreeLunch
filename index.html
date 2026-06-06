@@ -277,6 +277,24 @@ footer .f-thm{font-family:var(--mono);font-size:12px;color:var(--ink-soft);backg
 footer a{color:var(--tomato-d);font-weight:700;text-decoration:none}
 footer a:hover{text-decoration:underline}
 
+/* ---------- persistent game layer ---------- */
+.game-layer{
+  position:fixed;inset:0;z-index:100;background:var(--cream);
+  visibility:hidden;opacity:0;pointer-events:none;
+  transition:opacity .16s ease;
+}
+.game-layer.open{visibility:visible;opacity:1;pointer-events:auto}
+.game-layer iframe{width:100%;height:100%;border:0;display:block;background:var(--cream)}
+.game-home{
+  position:absolute;bottom:72px;left:18px;z-index:2;
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 13px;border:2.5px solid var(--ink);border-radius:999px;
+  background:var(--paper);color:var(--ink);box-shadow:2.5px 2.5px 0 var(--ink);
+  font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;
+}
+.game-home:hover{transform:translate(-1px,-1px);box-shadow:3.5px 3.5px 0 var(--ink)}
+body.game-open{overflow:hidden}
+
 /* floating doodles */
 .doodle{position:absolute;pointer-events:none;user-select:none;opacity:.9;z-index:0;font-size:34px}
 .d1{top:120px;left:4%;animation:bob 4s ease-in-out infinite}
@@ -427,6 +445,11 @@ footer a:hover{text-decoration:underline}
   <a href="https://github.com/invariance3/GetFreeLunch" target="_blank" rel="noopener">view source on GitHub →</a>
 </footer>
 
+<div class="game-layer" id="game-layer" aria-hidden="true">
+  <button class="game-home" id="game-home" type="button">← Café home</button>
+  <iframe id="game-frame" title="Free Lunch Café game"></iframe>
+</div>
+
 <script>
 /* ---- wordmark letter pop-in ---- */
 (function(){
@@ -504,6 +527,55 @@ window.setFood=function(t){
 window.clearTray=function(){ pts=[]; draw(); };
 window.addEventListener('resize', resize);
 seed(); resize();
+
+/* ---- keep the café music alive while moving between games ---- */
+(function(){
+  const layer = document.getElementById('game-layer');
+  const frame = document.getElementById('game-frame');
+  const home = document.getElementById('game-home');
+  const games = new Set(['online_nfl.html', 'no_free_lunch.html']);
+
+  function requestedGame(){
+    const game = new URLSearchParams(location.search).get('game');
+    return games.has(game) ? game : null;
+  }
+
+  function showGame(game, push){
+    if (!games.has(game)) return;
+    if (frame.getAttribute('src') !== game) frame.src = game;
+    layer.classList.add('open');
+    layer.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('game-open');
+    if (push) history.pushState({game}, '', '?game=' + encodeURIComponent(game));
+  }
+
+  function hideGame(push){
+    layer.classList.remove('open');
+    layer.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('game-open');
+    if (push) history.pushState({}, '', location.pathname);
+  }
+
+  document.addEventListener('click', function(event){
+    const link = event.target.closest('a[href]');
+    if (!link || event.defaultPrevented || event.button !== 0 ||
+        event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const href = link.getAttribute('href');
+    if (!games.has(href)) return;
+    event.preventDefault();
+    showGame(href, true);
+  });
+
+  home.addEventListener('click', function(){ hideGame(true); });
+  window.addEventListener('popstate', function(){
+    const game = requestedGame();
+    if (game) showGame(game, false);
+    else hideGame(false);
+  });
+
+  const initialGame = requestedGame();
+  if (initialGame) showGame(initialGame, false);
+})();
 </script>
 <script src="cafe_bgm.js"></script>
 </body>

@@ -71,11 +71,14 @@ h1{font-family:var(--disp); font-weight:400; font-size:clamp(22px,3.2vw,30px); l
 .panel-label{font-family:var(--mono); font-size:10px; font-weight:700; color:var(--ink-soft); letter-spacing:.12em; text-transform:uppercase; margin-bottom:12px}
 
 /* ---------- grid / canvas ---------- */
-#grid-wrap{position:relative; width:100%; aspect-ratio:1}
-canvas{display:block; width:100%; height:100%; border-radius:12px; cursor:crosshair}
+#grid-wrap{
+  position:relative; width:100%; aspect-ratio:1; overflow:hidden;
+  border:2.5px solid var(--ink); border-radius:14px; background:#fffdf8;
+}
+canvas{display:block; width:100%; height:100%; border-radius:11px; cursor:crosshair}
 #grid-canvas{position:absolute; top:0; left:0}
 #overlay-canvas{position:absolute; top:0; left:0}
-canvas#board{display:block; width:100%; height:100%; border:2.5px solid var(--ink); border-radius:14px; background:#fffdf8}
+canvas#board{display:block; width:100%; height:100%; background:#fffdf8}
 
 /* ---------- toolbar / buttons ---------- */
 .toolbar{display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap}
@@ -437,11 +440,11 @@ function render() {
     const x=c*cs, y=r*cs, key=r+','+c;
     const committed = S.committed[key];
     if (committed) {
-      ctx.fillStyle = committed === 'red' ? 'rgba(255,90,77,0.55)' : 'rgba(74,130,255,0.55)';
+      ctx.fillStyle = committed === 'red' ? 'rgba(255,90,77,0.20)' : 'rgba(74,130,255,0.20)';
       ctx.fillRect(x,y,cs,cs);
       drawFood(ctx, committed, x+cs/2, y+cs/2, cs*0.72);
     }
-    ctx.strokeStyle = '#e7d3b0'; ctx.lineWidth = 0.5;
+    ctx.strokeStyle = 'rgba(58,36,21,0.10)'; ctx.lineWidth = 1;
     ctx.strokeRect(x,y,cs,cs);
   }
   // Query cell highlight + prediction ring
@@ -625,11 +628,11 @@ resize();
     for (let r=0;r<MDG;r++) for (let c=0;c<MDG;c++){
       const x=c*cs, y=r*cs, v=duel.committed[r+','+c];
       if (v){
-        ctx.fillStyle = v==='red' ? 'rgba(255,90,77,0.55)' : 'rgba(74,130,255,0.55)';
+        ctx.fillStyle = v==='red' ? 'rgba(255,90,77,0.20)' : 'rgba(74,130,255,0.20)';
         ctx.fillRect(x,y,cs,cs);
         drawFood(ctx, v, x+cs/2, y+cs/2, cs*0.7);
       }
-      ctx.strokeStyle = '#e7d3b0'; ctx.lineWidth = 0.5; ctx.strokeRect(x,y,cs,cs);
+      ctx.strokeStyle = 'rgba(58,36,21,0.10)'; ctx.lineWidth = 1; ctx.strokeRect(x,y,cs,cs);
     }
     if (duel.query){
       const { r, c } = duel.query, x=c*cs, y=r*cs, v=dvote(r,c);
