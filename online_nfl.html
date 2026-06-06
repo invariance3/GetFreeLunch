@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Online NFL — Littlestone Duel</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800&display=swap');
+
+:root {
+  --bg: #0a0a0f;
+  --surface: #111118;
+  --surface2: #1a1a24;
+  --border: #2a2a3a;
+  --border2: #3a3a50;
+  --red: #e84040;
+  --red-dim: #6b1f1f;
+  --blue: #3a7fff;
+  --blue-dim: #1a3566;
+  --green: #2dcc70;
+  --green-dim: #1a5a35;
+  --amber: #f5a623;
+  --amber-dim: #5a3d0f;
+  --text: #e8e8f0;
+  --text2: #8888a8;
+  --text3: #444460;
+  --mono: 'Space Mono', monospace;
+  --sans: 'Syne', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px 40px;
+}
+
+header {
+  width: 100%;
+  max-width: 900px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 16px;
+}
+
+.title-row { display: flex; align-items: baseline; gap: 16px; margin-bottom: 4px; flex-wrap: wrap; }
+h1 { font-family: var(--sans); font-size: 22px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); }
+.subtitle { font-size: 11px; color: var(--text2); letter-spacing: 0.08em; }
+.theorem-tag {
+  font-size: 10px; font-family: var(--mono);
+  background: var(--amber-dim); color: var(--amber);
+  padding: 3px 8px; border-radius: 2px; letter-spacing: 0.05em;
+}
+.back-link { font-size: 10px; color: var(--text3); text-decoration: none; margin-left: auto; }
+.back-link:hover { color: var(--text2); }
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 16px;
+  width: 100%;
+  max-width: 900px;
+}
+@media (max-width: 720px) { .layout { grid-template-columns: 1fr; } }
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 16px;
+}
+.panel-label {
+  font-size: 10px; color: var(--text3); letter-spacing: 0.12em;
+  text-transform: uppercase; margin-bottom: 12px;
+}
+
+#grid-wrap { position: relative; width: 100%; aspect-ratio: 1; }
+canvas#board { display: block; width: 100%; height: 100%; border-radius: 2px; cursor: crosshair; }
+
+.side { display: flex; flex-direction: column; gap: 12px; }
+
+.stats-row { display: flex; gap: 10px; }
+.stat-block { flex: 1; padding: 12px; background: var(--surface2); border-radius: 2px; border: 1px solid var(--border); text-align: center; }
+.stat-val { font-family: var(--sans); font-size: 30px; font-weight: 800; line-height: 1; }
+.stat-val.bad { color: var(--red); }
+.stat-val.amber { color: var(--amber); }
+.stat-sub { font-size: 9px; color: var(--text3); letter-spacing: 0.08em; margin-top: 6px; text-transform: uppercase; }
+
+.query-box { padding: 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 2px; }
+.query-empty { font-size: 11px; color: var(--text3); text-align: center; padding: 8px 0; }
+.vote-line { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+.vote-line b.r { color: var(--red); }
+.vote-line b.b { color: var(--blue); }
+.pred-line { font-size: 12px; margin-bottom: 10px; }
+
+.commit-row { display: flex; gap: 8px; }
+.commit-btn {
+  flex: 1; font-family: var(--sans); font-weight: 700; font-size: 12px;
+  padding: 10px; border-radius: 2px; cursor: pointer; border: 1px solid var(--border2);
+  transition: all 0.12s;
+}
+.commit-btn.red { background: var(--red-dim); color: var(--red); border-color: var(--red); }
+.commit-btn.blue { background: var(--blue-dim); color: var(--blue); border-color: var(--blue); }
+.commit-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+.commit-btn.red:hover:not(:disabled) { background: #8a2828; }
+.commit-btn.blue:hover:not(:disabled) { background: #244a8a; }
+.tip { font-size: 9px; color: var(--text3); margin-top: 8px; line-height: 1.5; }
+
+.hyps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.hyp { text-align: center; opacity: 1; transition: opacity 0.2s; }
+.hyp.dead { opacity: 0.2; filter: grayscale(1); }
+.hyp canvas { width: 100%; aspect-ratio: 1; border-radius: 2px; border: 1px solid var(--border); display: block; }
+.hyp .hname { font-size: 8px; color: var(--text3); margin-top: 3px; line-height: 1.2; }
+.hyp.dead .hname { text-decoration: line-through; }
+
+.action-btn {
+  font-family: var(--sans); font-weight: 700; font-size: 13px;
+  padding: 10px 16px; border-radius: 2px; cursor: pointer; width: 100%;
+  border: none; transition: all 0.15s;
+}
+.action-btn.secondary { background: var(--surface2); color: var(--text2); border: 1px solid var(--border2); }
+.action-btn.secondary:hover { color: var(--text); border-color: var(--text3); }
+
+.log { font-size: 10px; color: var(--text2); line-height: 1.7; max-height: 130px; overflow-y: auto; }
+.log-entry { color: var(--text3); }
+.log-entry.bad { color: var(--red); }
+.log-entry.good { color: var(--green); }
+.log-entry.hl { color: var(--amber); }
+
+.nfl-box {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 2px; padding: 10px; font-size: 10px; color: var(--text2); line-height: 1.7;
+}
+.nfl-box strong { color: var(--amber); font-weight: 700; }
+
+.banner {
+  margin-top: 8px; padding: 10px 12px; border-radius: 2px; font-size: 12px;
+  border: 1px solid var(--green); color: var(--green); background: var(--green-dim);
+  display: none;
+}
+.banner.show { display: block; }
+.help { margin-top: 8px; font-size: 10px; color: var(--text3); line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title-row">
+    <h1>Online NFL · Littlestone Duel</h1>
+    <span class="theorem-tag">force ≤ Ldim(H) mistakes</span>
+    <a class="back-link" href="no_free_lunch.html">← back to batch game</a>
+  </div>
+  <div class="subtitle">You are the adaptive adversary. Make the online learner err — but f must stay in H.</div>
+</header>
+
+<div class="layout">
+  <div>
+    <div class="panel" style="padding:10px;">
+      <div id="grid-wrap"><canvas id="board"></canvas></div>
+    </div>
+    <div class="help" id="help"></div>
+  </div>
+
+  <div class="side">
+    <div class="stats-row">
+      <div class="stat-block"><div class="stat-val bad" id="mistakes">0</div><div class="stat-sub">Mistakes forced</div></div>
+      <div class="stat-block"><div class="stat-val amber" id="alive-count">8</div><div class="stat-sub">Hypotheses alive</div></div>
+    </div>
+
+    <div>
+      <div class="panel-label">Current query</div>
+      <div class="query-box" id="query-box">
+        <div class="query-empty" id="query-empty">Click an empty cell to pose x<sub>t</sub></div>
+        <div id="query-active" style="display:none">
+          <div class="vote-line" id="vote-line"></div>
+          <div class="pred-line" id="pred-line"></div>
+          <div class="commit-row">
+            <button class="commit-btn red" id="commit-red" onclick="commit('red')">true = RED</button>
+            <button class="commit-btn blue" id="commit-blue" onclick="commit('blue')">true = BLUE</button>
+          </div>
+          <div class="tip">To force a mistake: pick the color <b>opposite</b> the prediction on a <b>split</b> cell (the minority — still backed by ≥1 hypothesis).</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="banner" id="banner"></div>
+
+    <div>
+      <div class="panel-label">Hypothesis class H (version space)</div>
+      <div class="hyps" id="hyps"></div>
+    </div>
+
+    <button class="action-btn secondary" onclick="resetGame()">↻ Restart</button>
+
+    <div>
+      <div class="panel-label">Log</div>
+      <div class="log" id="log"></div>
+    </div>
+
+    <div class="nfl-box">
+      <strong>Online No Free Lunch</strong><br>
+      Unconstrained f → "always answer the opposite" wins every round (the theorem, no skill).
+      Constrain f to a class H → the most mistakes anyone can force is the <strong>Littlestone dimension</strong> Ldim(H) ≤ log₂|H|.
+      Here |H| = 8, so the cap is <strong>3</strong>. Halving = the learner predicts the majority of surviving hypotheses; every mistake at least halves them.
+    </div>
+  </div>
+</div>
+
+<script>
+const GRID = 16;
+
+// H = the same 8 patterns as the batch game; this is our hypothesis class.
+const hypotheses = [
+  { name: 'Vertical', fn: (r,c) => c < GRID/2 ? 'red' : 'blue' },
+  { name: 'Horizontal', fn: (r,c) => r < GRID/2 ? 'red' : 'blue' },
+  { name: 'Checker', fn: (r,c) => (r+c)%2===0 ? 'red' : 'blue' },
+  { name: 'Circle', fn: (r,c) => { const dr=r-GRID/2, dc=c-GRID/2; return dr*dr+dc*dc < (GRID/3)*(GRID/3) ? 'red':'blue'; } },
+  { name: 'Diagonal', fn: (r,c) => r+c < GRID ? 'red' : 'blue' },
+  { name: 'Stripes', fn: (r,c) => Math.floor(c/3)%2===0 ? 'red':'blue' },
+  { name: 'Quadrants', fn: (r,c) => { const qr=r<GRID/2, qc=c<GRID/2; return (qr&&qc)||(!qr&&!qc)?'red':'blue'; } },
+  { name: 'Sparse', fn: (r,c) => ((r*7+c*13)%5 < 2) ? 'red':'blue' },
+];
+const LOG2H = Math.ceil(Math.log2(hypotheses.length)); // = 3
+
+let S;
+
+const canvas = document.getElementById('board');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  const w = document.getElementById('grid-wrap').clientWidth;
+  canvas.width = w; canvas.height = w;
+  render();
+}
+function cellSize() { return canvas.width / GRID; }
+
+function coords(e) {
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+  const cs = cellSize();
+  return { r: Math.floor(y/cs), c: Math.floor(x/cs) };
+}
+
+// Halving prediction at a cell, over surviving hypotheses.
+function vote(r, c) {
+  let red = 0, blue = 0;
+  for (const i of S.alive) { (hypotheses[i].fn(r,c) === 'red' ? red++ : blue++); }
+  return { red, blue, pred: red >= blue ? 'red' : 'blue' };
+}
+
+function selectCell(e) {
+  if (S.over) return;
+  const { r, c } = coords(e);
+  if (r<0||r>=GRID||c<0||c>=GRID) return;
+  if (S.committed[r+','+c] !== undefined) return; // can't re-pose a used point
+  S.query = { r, c };
+  render();
+}
+
+function commit(y) {
+  if (!S.query || S.over) return;
+  const { r, c } = S.query;
+  const v = vote(r, c);
+  if ((y === 'red' && v.red === 0) || (y === 'blue' && v.blue === 0)) {
+    addLog(`Illegal: no surviving hypothesis labels (${r},${c}) ${y}.`, 'bad');
+    return;
+  }
+  const mistake = (y !== v.pred);
+  S.committed[r+','+c] = y;
+  S.rounds++;
+  if (mistake) S.mistakes++;
+  // Prune the version space to hypotheses consistent with this answer.
+  S.alive = S.alive.filter(i => hypotheses[i].fn(r,c) === y);
+  addLog(`r${S.rounds} (${r},${c}): pred ${v.pred} [${v.red}R/${v.blue}B], true ${y} → ${mistake ? '✗ MISTAKE' : '✓ no error'}; ${S.alive.length} alive`,
+    mistake ? 'bad' : '');
+  S.query = null;
+  if (S.alive.length <= 1) finish();
+  render();
+}
+
+function finish() {
+  S.over = true;
+  const last = hypotheses[S.alive[0]];
+  const banner = document.getElementById('banner');
+  banner.classList.add('show');
+  let verdict;
+  if (S.mistakes >= LOG2H) verdict = `Perfect — you hit the cap (${S.mistakes}/${LOG2H}). That's Ldim of this H.`;
+  else if (S.mistakes === 0) verdict = `0 mistakes — you let it learn for free. Always punish split cells!`;
+  else verdict = `${S.mistakes}/${LOG2H} mistakes forced. Can you split more evenly next time?`;
+  banner.style.borderColor = S.mistakes >= LOG2H ? 'var(--green)' : 'var(--amber)';
+  banner.style.color = S.mistakes >= LOG2H ? 'var(--green)' : 'var(--amber)';
+  banner.style.background = S.mistakes >= LOG2H ? 'var(--green-dim)' : 'var(--amber-dim)';
+  banner.textContent = `Learner locked onto f = "${last.name}". ${verdict}`;
+  addLog(`--- done: learner identified "${last.name}", ${S.mistakes} mistakes in ${S.rounds} rounds ---`, 'hl');
+}
+
+function render() {
+  const cs = cellSize();
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  for (let r=0;r<GRID;r++) for (let c=0;c<GRID;c++) {
+    const x=c*cs, y=r*cs, key=r+','+c;
+    const committed = S.committed[key];
+    if (committed) {
+      ctx.fillStyle = committed === 'red' ? 'rgba(232,64,64,0.55)' : 'rgba(58,127,255,0.55)';
+      ctx.fillRect(x,y,cs,cs);
+    }
+    ctx.strokeStyle = '#1a1a28'; ctx.lineWidth = 0.5;
+    ctx.strokeRect(x,y,cs,cs);
+  }
+  // Query cell highlight + prediction ring
+  if (S.query) {
+    const { r, c } = S.query, x=c*cs, y=r*cs;
+    const v = vote(r,c);
+    ctx.strokeStyle = '#f5a623'; ctx.lineWidth = 2.5;
+    ctx.strokeRect(x+1, y+1, cs-2, cs-2);
+    ctx.beginPath();
+    ctx.arc(x+cs/2, y+cs/2, cs*0.26, 0, Math.PI*2);
+    ctx.fillStyle = v.pred === 'red' ? 'rgba(232,64,64,0.9)' : 'rgba(58,127,255,0.9)';
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5; ctx.stroke();
+  }
+  // Side panel
+  document.getElementById('mistakes').textContent = S.mistakes;
+  document.getElementById('alive-count').textContent = S.alive.length;
+  updateQueryBox();
+  updateHyps();
+}
+
+function updateQueryBox() {
+  const empty = document.getElementById('query-empty');
+  const active = document.getElementById('query-active');
+  if (!S.query || S.over) {
+    empty.style.display = ''; active.style.display = 'none';
+    empty.textContent = S.over ? 'Game over — restart to play again.' : '';
+    if (!S.over) empty.innerHTML = 'Click an empty cell to pose x<sub>t</sub>';
+    return;
+  }
+  empty.style.display = 'none'; active.style.display = '';
+  const { r, c } = S.query;
+  const v = vote(r,c);
+  document.getElementById('vote-line').innerHTML =
+    `Cell (${r},${c}) — surviving votes: <b class="r">${v.red} red</b> / <b class="b">${v.blue} blue</b>`;
+  document.getElementById('pred-line').innerHTML =
+    `Halving predicts: <b style="color:${v.pred==='red'?'var(--red)':'var(--blue)'}">${v.pred.toUpperCase()}</b>` +
+    (v.red===0||v.blue===0 ? ' &nbsp;<span style="color:var(--text3)">(unanimous — can\'t err here)</span>' : '');
+  const cr = document.getElementById('commit-red'), cb = document.getElementById('commit-blue');
+  cr.disabled = (v.red === 0);
+  cb.disabled = (v.blue === 0);
+}
+
+const hypCanvases = [];
+function buildHyps() {
+  const wrap = document.getElementById('hyps');
+  wrap.innerHTML = '';
+  hypCanvases.length = 0;
+  hypotheses.forEach((h, i) => {
+    const d = document.createElement('div');
+    d.className = 'hyp'; d.id = 'hyp-'+i;
+    const cv = document.createElement('canvas');
+    cv.width = 48; cv.height = 48;
+    const cc = cv.getContext('2d');
+    const cs = 48/GRID;
+    for (let r=0;r<GRID;r++) for (let c=0;c<GRID;c++){
+      cc.fillStyle = h.fn(r,c)==='red' ? '#e84040' : '#3a7fff';
+      cc.fillRect(c*cs, r*cs, cs+0.5, cs+0.5);
+    }
+    const name = document.createElement('div');
+    name.className = 'hname'; name.textContent = h.name;
+    d.appendChild(cv); d.appendChild(name);
+    wrap.appendChild(d);
+    hypCanvases.push(d);
+  });
+}
+function updateHyps() {
+  hypotheses.forEach((_, i) => {
+    hypCanvases[i].className = 'hyp' + (S.alive.includes(i) ? '' : ' dead');
+  });
+}
+
+function addLog(msg, cls='') {
+  const log = document.getElementById('log');
+  const d = document.createElement('div');
+  d.className = 'log-entry ' + cls;
+  d.textContent = '> ' + msg;
+  log.insertBefore(d, log.firstChild);
+}
+
+function resetGame() {
+  S = { committed: {}, alive: hypotheses.map((_,i)=>i), query: null, mistakes: 0, rounds: 0, over: false };
+  document.getElementById('banner').classList.remove('show');
+  document.getElementById('log').innerHTML = '';
+  addLog(`New duel. H has ${hypotheses.length} hypotheses → you can force at most ${LOG2H} mistakes.`, 'hl');
+  render();
+}
+
+document.getElementById('help').innerHTML =
+  '<b>How to play.</b> You are the adversary. Click an empty cell to pose a point; the learner shows its prediction (the dot). ' +
+  'Then declare the true label — but at least one hypothesis in H must still agree. ' +
+  'A <b>mistake</b> happens when you answer opposite the prediction on a split cell. Each mistake halves the surviving set; collapse to 1 ends the duel.';
+
+canvas.addEventListener('click', selectCell);
+window.addEventListener('resize', resize);
+buildHyps();
+resetGame();
+resize();
+</script>
+</body>
+</html>
