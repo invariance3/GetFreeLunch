@@ -177,13 +177,96 @@ canvas { display: block; width: 100%; height: 100%; border-radius: 2px; cursor: 
 .reveal-overlay.show { display: flex; }
 .reveal-title { font-family: var(--sans); font-size: 20px; font-weight: 800; }
 .reveal-sub { font-size: 11px; color: var(--text2); }
+
+/* ---- How-to-play guide ---- */
+.help-fab {
+  position: fixed; right: 18px; bottom: 18px; z-index: 90;
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--amber); color: #000; border: none; cursor: pointer;
+  font-family: var(--sans); font-weight: 800; font-size: 18px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+.help-fab:hover { background: #ffb733; }
+
+.guide-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(5,5,9,0.82); backdrop-filter: blur(3px);
+  display: none; align-items: center; justify-content: center; padding: 16px;
+}
+.guide-overlay.show { display: flex; }
+.guide-card {
+  width: 100%; max-width: 600px; max-height: 92vh; overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 8px; padding: 22px; box-shadow: 0 10px 50px rgba(0,0,0,0.6);
+}
+.guide-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; }
+.guide-title { font-family: var(--sans); font-size: 20px; font-weight: 800; }
+.guide-counter { font-size: 11px; color: var(--text3); white-space: nowrap; }
+.guide-body { font-size: 13px; color: var(--text2); line-height: 1.7; }
+.guide-body p { margin-bottom: 10px; }
+.guide-body b { color: var(--text); }
+.guide-body .k { color: var(--amber); font-weight: 700; }
+.guide-body .rr { color: var(--red); font-weight: 700; }
+.guide-body .bb { color: var(--blue); font-weight: 700; }
+
+.guide-demo { margin-top: 16px; }
+.g-demo-tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+.g-mini-wrap { display: flex; justify-content: center; }
+#g-mini { width: 100%; max-width: 320px; aspect-ratio: 1; border-radius: 3px; cursor: crosshair; background: var(--bg); }
+.g-meter { margin-top: 10px; text-align: center; font-size: 12px; color: var(--text2); }
+.g-meter .mval { font-family: var(--sans); font-weight: 800; font-size: 20px; vertical-align: -2px; }
+.g-task {
+  margin-top: 10px; padding: 9px 12px; border-radius: 3px; font-size: 11px; line-height: 1.5;
+  border: 1px solid var(--amber); background: var(--amber-dim); color: var(--amber);
+}
+.g-task.done { border-color: var(--green); background: var(--green-dim); color: var(--green); }
+
+.gm-cards { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+.gm-card { padding: 11px 13px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface2); font-size: 12px; line-height: 1.6; }
+.gm-card .gm-h { font-family: var(--sans); font-weight: 700; font-size: 13px; color: var(--text); margin-bottom: 3px; }
+
+.guide-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 20px; }
+.g-skip { background: none; border: none; color: var(--text3); font-family: var(--mono); font-size: 11px; cursor: pointer; }
+.g-skip:hover { color: var(--text2); }
+.guide-dots { display: flex; gap: 6px; }
+.guide-dots .gdot { width: 7px; height: 7px; border-radius: 50%; background: var(--border2); cursor: pointer; }
+.guide-dots .gdot.cur { background: var(--amber); }
+.g-nav { display: flex; gap: 8px; }
+.g-nav .tool-btn { padding: 8px 14px; }
+.g-nav .action-btn { width: auto; padding: 8px 18px; }
 </style>
 </head>
 <body>
 
+<button class="help-fab" onclick="guideOpen(0)" title="How to play">?</button>
+
+<div class="guide-overlay" id="guide">
+  <div class="guide-card">
+    <div class="guide-head">
+      <div class="guide-title" id="g-title"></div>
+      <div class="guide-counter" id="g-counter"></div>
+    </div>
+    <div class="guide-body" id="g-body"></div>
+    <div class="guide-demo" id="g-demo" style="display:none">
+      <div class="g-demo-tools" id="g-tools"></div>
+      <div class="g-mini-wrap"><canvas id="g-mini" width="320" height="320"></canvas></div>
+      <div class="g-meter" id="g-meter" style="display:none"></div>
+      <div class="g-task" id="g-task" style="display:none"></div>
+    </div>
+    <div class="guide-foot">
+      <button class="g-skip" onclick="guideClose()">Skip ✕</button>
+      <div class="guide-dots" id="g-dots"></div>
+      <div class="g-nav">
+        <button class="tool-btn" id="g-back" onclick="guidePrev()">← Back</button>
+        <button class="action-btn primary" id="g-next" onclick="guideNext()">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <header>
   <div class="title-row">
-    <h1>Get Free Lunch</h1>
+    <h1>Design an adversarial training set</h1>
     <span class="theorem-tag">∀A ∃f : L(A,f) = chance</span>
   </div>
   <div class="subtitle">Design an adversarial training set · make kNN fail on the test set</div>
@@ -738,6 +821,236 @@ updateModeUI();
 syncTruthBtn();
 updateRoundDots();
 addLog(`Game start (Training mode). True function f = "${getCurrentFn().name}" — build a training set that makes kNN fail on it.`, 'highlight');
+</script>
+
+<script>
+/* ===== Interactive how-to-play guide (self-contained, no coupling to game state) ===== */
+(function(){
+  const KEY = 'nfl_guide_seen_v1';
+  const MG = 12;                            // mini-board size
+  const mgF = (r,c) => c < MG/2 ? 'red' : 'blue';  // tutorial truth: red left, blue right
+  let mg = { pts:{}, k:1, tool:'blue' };
+  let gIdx = 0;
+
+  const steps = [
+    {
+      title: 'No Free Lunch — the game',
+      body: "<p>A learning algorithm called <b>kNN</b> will try to label every square of a grid. <b>You play the villain:</b> you design the data so it gets things <b>wrong</b>.</p>"
+          + "<p>That's the <b>No Free Lunch theorem</b> made physical — for any algorithm there's always a world where it fails. Your job is to build that world. This quick tour is interactive; you'll actually play a tiny round.</p>"
+    },
+    {
+      title: 'Step 1 · The hidden truth f',
+      body: "<p>Every square has a correct color, decided by a hidden rule called <b>f</b>. In this tutorial <b>f</b> = <span class='rr'>red</span> on the left half, <span class='bb'>blue</span> on the right.</p>"
+          + "<p>The faint background <b>is</b> f — the answer key kNN is trying to match.</p>",
+      demo: { show:true, showF:true, interactive:false }
+    },
+    {
+      title: 'Step 2 · How kNN thinks',
+      body: "<p>kNN labels a square by finding the <b>nearest training point</b> you placed and copying its color. That carves the board into territories (a Voronoi diagram).</p>"
+          + "<p><b>Try it:</b> pick a color, then click squares to drop training points. Watch every cell snap to its nearest dot.</p>",
+      demo: { show:true, showPred:true, interactive:true, k:1, tools:['red','blue','reset'] }
+    },
+    {
+      title: 'Step 3 · Your mission — make it fail',
+      body: "<p>An <b>error</b> is a square where kNN's guess ≠ the truth f. The faint background is the truth again; every square kNN gets wrong is marked <b>✗</b>.</p>"
+          + "<p>Winning move: place dots so kNN's territory is the <b>opposite</b> of the background — <span class='bb'>blue</span> dots over the red side, <span class='rr'>red</span> dots over the blue side.</p>",
+      demo: { show:true, showF:true, marks:true, meter:true, interactive:true, k:1, target:0.6,
+              tools:['red','blue','reset'],
+              task:"GOAL: push the error to 60% or more. Drop opposite-colored dots across both halves." }
+    },
+    {
+      title: 'Step 4 · Choose your opponent',
+      body: "<p>In the real game you face <span class='k'>1-NN</span>, <span class='k'>3-NN</span>, or <span class='k'>5-NN</span>. With <b>1-NN</b>, one dot flips a whole region — easy to fool. With <b>3/5-NN</b> a cell follows the <b>majority</b> of its nearest dots, so a lone dot does nothing; you need <b>clusters</b>.</p>"
+          + "<p><b>Try it:</b> switch k below and feel how much harder the stronger learner is to break.</p>",
+      demo: { show:true, showF:true, marks:true, meter:true, interactive:true, k:1, tools:['red','blue','k','reset'] }
+    },
+    {
+      title: 'Step 5 · Three ways to play',
+      body: "<div class='gm-cards'>"
+          + "<div class='gm-card'><div class='gm-h'>🎯 Training</div>f is fully visible. A sandbox to practice building adversarial data with live feedback.</div>"
+          + "<div class='gm-card'><div class='gm-h'>🎲 Challenge</div>f is hidden — you get only a few ◇ sample points. Deduce the pattern, then attack. Live error stays hidden until you submit.</div>"
+          + "<div class='gm-card'><div class='gm-h'>⚔️ Online NFL</div>A turn-by-turn duel: the learner predicts, you reveal the true label. f is constrained to a hypothesis class, so it's a real puzzle (Littlestone dimension).</div>"
+          + "</div>"
+    },
+    {
+      title: "You're ready",
+      body: "<p>Place points, watch the live error rate climb, and hit <b>Submit</b> to test against the real f. Press the <b>?</b> button (bottom-right) anytime to reopen this guide.</p>"
+          + "<p><button class='tool-btn' onclick='guideOpen(3)'>↻ Replay tutorial level</button></p>"
+    }
+  ];
+
+  const cv = document.getElementById('g-mini');
+
+  function mgPredict(r,c,k){
+    k = k || 1;
+    const es = Object.entries(mg.pts);
+    if (!es.length) return null;
+    const ds = es.map(([key,cls]) => {
+      const a = key.split(','); const tr = +a[0], tc = +a[1];
+      return { d:(r-tr)*(r-tr)+(c-tc)*(c-tc), cls };
+    }).sort((a,b)=>a.d-b.d);
+    const v = {};
+    for (let i=0;i<Math.min(k,ds.length);i++) v[ds[i].cls] = (v[ds[i].cls]||0)+1;
+    return Object.entries(v).sort((a,b)=>b[1]-a[1])[0][0];
+  }
+
+  function mgError(){
+    if (!Object.keys(mg.pts).length) return null;
+    let w=0,t=0;
+    for (let r=0;r<MG;r++) for (let c=0;c<MG;c++){ t++; if (mgPredict(r,c,mg.k) !== mgF(r,c)) w++; }
+    return w/t;
+  }
+
+  function renderMini(){
+    const s = steps[gIdx].demo; if (!s) return;
+    const ctx = cv.getContext('2d');
+    const W = cv.width, cs = W/MG;
+    ctx.clearRect(0,0,W,W);
+    const hasPts = Object.keys(mg.pts).length > 0;
+    for (let r=0;r<MG;r++) for (let c=0;c<MG;c++){
+      const x=c*cs, y=r*cs;
+      if (s.showF){
+        ctx.fillStyle = mgF(r,c)==='red' ? 'rgba(232,64,64,0.16)' : 'rgba(58,127,255,0.16)';
+        ctx.fillRect(x,y,cs,cs);
+      } else if (s.showPred && hasPts){
+        const p = mgPredict(r,c,mg.k);
+        ctx.fillStyle = p==='red' ? 'rgba(232,64,64,0.16)' : 'rgba(58,127,255,0.16)';
+        ctx.fillRect(x,y,cs,cs);
+      }
+      ctx.strokeStyle = '#1a1a28'; ctx.lineWidth = 0.5; ctx.strokeRect(x,y,cs,cs);
+      if (s.marks && hasPts){
+        const p = mgPredict(r,c,mg.k);
+        if (p && p !== mgF(r,c)){
+          const m=cs*0.18, xc=x+cs/2, yc=y+cs/2;
+          ctx.strokeStyle='rgba(255,255,255,0.85)'; ctx.lineWidth=1.5;
+          ctx.beginPath(); ctx.moveTo(xc-m,yc-m); ctx.lineTo(xc+m,yc+m); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(xc+m,yc-m); ctx.lineTo(xc-m,yc+m); ctx.stroke();
+        }
+      }
+    }
+    for (const [key,cls] of Object.entries(mg.pts)){
+      const a=key.split(','), r=+a[0], c=+a[1], x=c*cs+cs/2, y=r*cs+cs/2;
+      ctx.beginPath(); ctx.arc(x,y,cs*0.32,0,Math.PI*2);
+      ctx.fillStyle = cls==='red' ? '#e84040' : '#3a7fff'; ctx.fill();
+      ctx.strokeStyle = cls==='red' ? '#ff6060' : '#70aaff'; ctx.lineWidth=1.5; ctx.stroke();
+    }
+    if (s.meter){
+      const e = mgError();
+      const meter = document.getElementById('g-meter');
+      if (e == null){
+        meter.innerHTML = "<span class='mval' style='color:var(--text3)'>—</span> place points to begin";
+      } else {
+        const pct = Math.round(e*100);
+        const col = pct>=60 ? 'var(--green)' : pct>=40 ? 'var(--amber)' : 'var(--red)';
+        meter.innerHTML = "<span class='mval' style='color:"+col+"'>"+pct+"%</span> of cells wrong";
+      }
+      if (s.target != null){
+        const task = document.getElementById('g-task');
+        const ok = e != null && e >= s.target;
+        task.classList.toggle('done', ok);
+        task.textContent = ok ? ('✓ Nice — '+Math.round(e*100)+'% wrong. Press Next to continue.') : s.task;
+      }
+    }
+  }
+
+  function buildTools(list){
+    const wrap = document.getElementById('g-tools');
+    wrap.innerHTML = '';
+    if (!list || !list.length){ wrap.style.display='none'; return; }
+    wrap.style.display = 'flex';
+    list.forEach(t => {
+      if (t==='red' || t==='blue'){
+        const b = document.createElement('button');
+        b.className = 'tool-btn' + (mg.tool===t ? (t==='red'?' active-red':' active-blue') : '');
+        b.textContent = t==='red' ? '+ Red' : '+ Blue';
+        b.onclick = () => { mg.tool = t; buildTools(list); };
+        wrap.appendChild(b);
+      } else if (t==='k'){
+        const lab = document.createElement('span'); lab.className='tool-label'; lab.textContent='Opponent:'; wrap.appendChild(lab);
+        [1,3,5].forEach(kk => {
+          const b = document.createElement('button');
+          b.className = 'tool-btn' + (mg.k===kk ? ' on' : '');
+          b.textContent = kk+'-NN';
+          b.onclick = () => { mg.k = kk; buildTools(list); renderMini(); refreshNav(); };
+          wrap.appendChild(b);
+        });
+      } else if (t==='reset'){
+        const b = document.createElement('button');
+        b.className = 'tool-btn'; b.textContent = 'Clear';
+        b.onclick = () => { mg.pts = {}; renderMini(); refreshNav(); };
+        wrap.appendChild(b);
+      }
+    });
+  }
+
+  function buildDots(){
+    const w = document.getElementById('g-dots'); w.innerHTML='';
+    steps.forEach((_, i) => {
+      const d = document.createElement('div');
+      d.className = 'gdot' + (i===gIdx ? ' cur' : '');
+      d.onclick = () => setupStep(i);
+      w.appendChild(d);
+    });
+  }
+
+  function refreshNav(){
+    const back = document.getElementById('g-back'), next = document.getElementById('g-next');
+    back.style.visibility = gIdx===0 ? 'hidden' : 'visible';
+    const s = steps[gIdx].demo;
+    let locked = false;
+    if (s && s.target != null){ const e = mgError(); locked = !(e != null && e >= s.target); }
+    next.disabled = locked;
+    next.textContent = gIdx===steps.length-1 ? 'Start playing ✓' : 'Next →';
+  }
+
+  function setupStep(i){
+    gIdx = i;
+    const s = steps[i];
+    document.getElementById('g-title').textContent = s.title;
+    document.getElementById('g-counter').textContent = (i+1)+' / '+steps.length;
+    document.getElementById('g-body').innerHTML = s.body;
+    const demo = document.getElementById('g-demo');
+    const task = document.getElementById('g-task');
+    if (s.demo && s.demo.show){
+      demo.style.display = '';
+      mg.pts = {}; mg.k = s.demo.k || 1; mg.tool = 'blue';
+      buildTools(s.demo.tools);
+      document.getElementById('g-meter').style.display = s.demo.meter ? '' : 'none';
+      if (s.demo.target != null){ task.style.display=''; task.classList.remove('done'); task.textContent = s.demo.task || ''; }
+      else task.style.display = 'none';
+      renderMini();
+    } else {
+      demo.style.display = 'none';
+    }
+    buildDots();
+    refreshNav();
+    const card = document.querySelector('.guide-card'); if (card) card.scrollTop = 0;
+  }
+
+  cv.addEventListener('click', e => {
+    const s = steps[gIdx].demo;
+    if (!s || !s.interactive) return;
+    const rect = cv.getBoundingClientRect();
+    const x = (e.clientX-rect.left)*(cv.width/rect.width);
+    const y = (e.clientY-rect.top)*(cv.height/rect.height);
+    const cs = cv.width/MG;
+    const c = Math.floor(x/cs), r = Math.floor(y/cs);
+    if (r<0||r>=MG||c<0||c>=MG) return;
+    const key = r+','+c;
+    if (mg.pts[key] === mg.tool) delete mg.pts[key]; else mg.pts[key] = mg.tool;
+    renderMini(); refreshNav();
+  });
+
+  window.guideOpen = function(i){ document.getElementById('guide').classList.add('show'); setupStep(i||0); };
+  window.guideClose = function(){ document.getElementById('guide').classList.remove('show'); try{ localStorage.setItem(KEY,'1'); }catch(e){} };
+  window.guideNext = function(){ if (gIdx >= steps.length-1) guideClose(); else setupStep(gIdx+1); };
+  window.guidePrev = function(){ setupStep(Math.max(0, gIdx-1)); };
+
+  // Auto-open the first time only.
+  let seen = false;
+  try { seen = !!localStorage.getItem(KEY); } catch(e) {}
+  if (!seen) guideOpen(0);
+})();
 </script>
 </body>
 </html>
