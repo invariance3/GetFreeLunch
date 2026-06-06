@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>No Free Lunch — 打败学习算法</title>
+<title>No Free Lunch — Beat the Learning Algorithm</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800&display=swap');
 
@@ -183,34 +183,34 @@ canvas { display: block; width: 100%; height: 100%; border-radius: 2px; cursor: 
 
 <header>
   <div class="title-row">
-    <h1>No Free Lunch</h1>
+    <h1>Get Free Lunch</h1>
     <span class="theorem-tag">∀A ∃f : L(A,f) = chance</span>
   </div>
-  <div class="subtitle">设计对抗训练集 · 让 1-NN 在测试集上彻底失败</div>
+  <div class="subtitle">Design an adversarial training set · make kNN fail on the test set</div>
 </header>
 
 <div class="layout">
   <!-- Left: canvas -->
   <div>
     <div class="toolbar">
-      <span class="tool-label">模式</span>
-      <button class="tool-btn on" id="mode-training" onclick="setMode('training')">🎯 训练模式</button>
-      <button class="tool-btn" id="mode-challenge" onclick="setMode('challenge')">🎲 挑战模式</button>
+      <span class="tool-label">Mode</span>
+      <button class="tool-btn on" id="mode-training" onclick="setMode('training')">🎯 Training</button>
+      <button class="tool-btn" id="mode-challenge" onclick="setMode('challenge')">🎲 Challenge</button>
     </div>
     <div class="toolbar">
-      <button class="tool-btn active-red" id="btn-red" onclick="setTool('red')">+ 红点 (class A)</button>
-      <button class="tool-btn" id="btn-blue" onclick="setTool('blue')">+ 蓝点 (class B)</button>
+      <button class="tool-btn active-red" id="btn-red" onclick="setTool('red')">+ Red (class A)</button>
+      <button class="tool-btn" id="btn-blue" onclick="setTool('blue')">+ Blue (class B)</button>
       <div class="sep"></div>
-      <button class="tool-btn" id="btn-erase" onclick="setTool('erase')">橡皮擦</button>
-      <button class="tool-btn" onclick="clearTraining()">清空</button>
+      <button class="tool-btn" id="btn-erase" onclick="setTool('erase')">Eraser</button>
+      <button class="tool-btn" onclick="clearTraining()">Clear</button>
     </div>
     <div class="toolbar">
-      <span class="tool-label">对手算法</span>
+      <span class="tool-label">Opponent</span>
       <button class="tool-btn on" id="btn-k1" onclick="setK(1)">1-NN</button>
       <button class="tool-btn" id="btn-k3" onclick="setK(3)">3-NN</button>
       <button class="tool-btn" id="btn-k5" onclick="setK(5)">5-NN</button>
       <div class="sep"></div>
-      <button class="tool-btn on" id="btn-truth" onclick="toggleTruth()">👁 背景: 真实 f</button>
+      <button class="tool-btn on" id="btn-truth" onclick="toggleTruth()">👁 Background: true f</button>
     </div>
     <div class="panel" style="padding: 10px;">
       <div id="grid-wrap">
@@ -229,54 +229,54 @@ canvas { display: block; width: 100%; height: 100%; border-radius: 2px; cursor: 
   <div class="side">
 
     <div>
-      <div class="panel-label">当前状态</div>
-      <div id="phase-indicator" class="phase-indicator design">— 设计阶段：放置训练点 —</div>
+      <div class="panel-label">Current Phase</div>
+      <div id="phase-indicator" class="phase-indicator design">— Design phase: place training points —</div>
     </div>
 
     <div>
-      <div class="panel-label">关卡进度</div>
+      <div class="panel-label">Level Progress</div>
       <div class="round-indicator" id="round-dots"></div>
     </div>
 
     <div>
-      <div class="panel-label">实时错误率（vs 真实 f）</div>
+      <div class="panel-label">Live error rate (vs true f)</div>
       <div class="stat-block">
         <div class="stat-val" id="live-rate">—</div>
-        <div class="stat-sub">放点时实时更新 · 越高越好</div>
+        <div class="stat-sub">Updates as you place points · higher is better</div>
       </div>
     </div>
 
     <div>
-      <div class="panel-label">本轮错误率</div>
+      <div class="panel-label">This round's error rate</div>
       <div class="stat-block">
         <div class="stat-val" id="error-rate-val">—</div>
-        <div class="stat-sub" id="error-rate-sub">提交后揭示</div>
+        <div class="stat-sub" id="error-rate-sub">Revealed after submit</div>
       </div>
     </div>
 
     <div>
-      <div class="panel-label">图例</div>
+      <div class="panel-label">Legend</div>
       <div class="legend">
-        <div class="legend-row"><div class="dot red"></div>训练点 class A</div>
-        <div class="legend-row"><div class="dot blue"></div>训练点 class B</div>
-        <div class="legend-row"><div class="dot red" style="opacity:0.4; border:1.5px solid var(--red)"></div>1-NN 预测 A 区域</div>
-        <div class="legend-row"><div class="dot blue" style="opacity:0.4; border:1.5px solid var(--blue)"></div>1-NN 预测 B 区域</div>
-        <div class="legend-row"><div class="dot" style="background:#fff; width:10px;height:10px; border-radius:50%;"></div>测试点（X = 预测错误）</div>
+        <div class="legend-row"><div class="dot red"></div>Training point, class A</div>
+        <div class="legend-row"><div class="dot blue"></div>Training point, class B</div>
+        <div class="legend-row"><div class="dot red" style="opacity:0.4; border:1.5px solid var(--red)"></div>kNN predicts region A</div>
+        <div class="legend-row"><div class="dot blue" style="opacity:0.4; border:1.5px solid var(--blue)"></div>kNN predicts region B</div>
+        <div class="legend-row"><div class="dot" style="background:#fff; width:10px;height:10px; border-radius:50%;"></div>Test point (X = wrong prediction)</div>
       </div>
     </div>
 
-    <button class="action-btn primary" id="submit-btn" onclick="submitRound()">提交训练集 →</button>
-    <button class="action-btn secondary" id="next-btn" onclick="nextRound()" style="display:none">下一关 →</button>
+    <button class="action-btn primary" id="submit-btn" onclick="submitRound()">Submit training set →</button>
+    <button class="action-btn secondary" id="next-btn" onclick="nextRound()" style="display:none">Next level →</button>
 
     <div>
-      <div class="panel-label">实验日志</div>
+      <div class="panel-label">Experiment Log</div>
       <div class="log" id="log"></div>
     </div>
 
     <div class="nfl-box">
-      <strong>No Free Lunch 定理</strong><br>
-      对任意学习算法 A，存在一个目标函数 f，使得 A 的期望误差不优于随机猜测。<br>
-      你的任务：找到让 1-NN 失败的 f。
+      <strong>No Free Lunch theorem</strong><br>
+      For any learning algorithm A, there exists a target function f such that A's expected error is no better than random guessing.<br>
+      Your job: find the f (and data) that makes kNN fail.
     </div>
 
   </div>
@@ -287,14 +287,14 @@ const GRID = 16;
 const ROUNDS = 5;
 
 const trueFunctions = [
-  { name: '左红右蓝（垂直切割）', fn: (r,c) => c < GRID/2 ? 'red' : 'blue' },
-  { name: '上红下蓝（水平切割）', fn: (r,c) => r < GRID/2 ? 'red' : 'blue' },
-  { name: '棋盘格', fn: (r,c) => (r+c)%2===0 ? 'red' : 'blue' },
-  { name: '圆形区域（内红外蓝）', fn: (r,c) => { const dr=r-GRID/2, dc=c-GRID/2; return dr*dr+dc*dc < (GRID/3)*(GRID/3) ? 'red':'blue'; } },
-  { name: '对角线分割', fn: (r,c) => r+c < GRID ? 'red' : 'blue' },
-  { name: '条纹（3格宽）', fn: (r,c) => Math.floor(c/3)%2===0 ? 'red':'blue' },
-  { name: '四象限（红蓝交替）', fn: (r,c) => { const qr=r<GRID/2, qc=c<GRID/2; return (qr&&qc)||(!qr&&!qc)?'red':'blue'; } },
-  { name: '随机棋盘（稀疏）', fn: (r,c) => ((r*7+c*13)%5 < 2) ? 'red':'blue' },
+  { name: 'Left red / right blue (vertical split)', fn: (r,c) => c < GRID/2 ? 'red' : 'blue' },
+  { name: 'Top red / bottom blue (horizontal split)', fn: (r,c) => r < GRID/2 ? 'red' : 'blue' },
+  { name: 'Checkerboard', fn: (r,c) => (r+c)%2===0 ? 'red' : 'blue' },
+  { name: 'Circle (red inside, blue outside)', fn: (r,c) => { const dr=r-GRID/2, dc=c-GRID/2; return dr*dr+dc*dc < (GRID/3)*(GRID/3) ? 'red':'blue'; } },
+  { name: 'Diagonal split', fn: (r,c) => r+c < GRID ? 'red' : 'blue' },
+  { name: 'Stripes (3 cells wide)', fn: (r,c) => Math.floor(c/3)%2===0 ? 'red':'blue' },
+  { name: 'Four quadrants (alternating)', fn: (r,c) => { const qr=r<GRID/2, qc=c<GRID/2; return (qr&&qc)||(!qr&&!qc)?'red':'blue'; } },
+  { name: 'Pseudo-random (sparse)', fn: (r,c) => ((r*7+c*13)%5 < 2) ? 'red':'blue' },
 ];
 
 let state = {
@@ -307,7 +307,7 @@ let state = {
   testPoints: [],
   k: 1,
   showTruth: true,
-  mode: 'training',   // 'training' = f 可见, 'challenge' = f 隐藏+样本提示
+  mode: 'training',   // 'training' = f visible, 'challenge' = f hidden + sample hints
   hints: [],
 };
 
@@ -364,12 +364,12 @@ function draw() {
     for (let c=0; c<GRID; c++) {
       const x = c*cs, y = r*cs;
       if ((state.showTruth || state.phase === 'result') && fn) {
-        // 背景 = 真实函数 f（你的攻击目标）
+        // Background = true function f (your attack target)
         const t = fn.fn(r, c);
         gc.fillStyle = t === 'red' ? 'rgba(232,64,64,0.16)' : 'rgba(58,127,255,0.16)';
         gc.fillRect(x, y, cs, cs);
       } else if (hasPts) {
-        // 背景 = 算法的 Voronoi 预测
+        // Background = the algorithm's Voronoi prediction
         const pred = knnPredict(r, c);
         if (pred === 'red') gc.fillStyle = 'rgba(232,64,64,0.13)';
         else if (pred === 'blue') gc.fillStyle = 'rgba(58,127,255,0.13)';
@@ -455,11 +455,11 @@ function toggleTruth() {
   state.showTruth = !state.showTruth;
   const b = document.getElementById('btn-truth');
   b.className = 'tool-btn' + (state.showTruth ? ' on' : '');
-  b.textContent = state.showTruth ? '👁 背景: 真实 f' : '👁 背景: 算法预测';
+  b.textContent = state.showTruth ? '👁 Background: true f' : '👁 Background: prediction';
   draw();
 }
 
-const HINT_COUNT = 8;  // 挑战模式给出的 f 样本提示数（设 0 即纯运气）
+const HINT_COUNT = 8;  // number of f sample hints in challenge mode (set to 0 for pure luck)
 
 function setMode(m) {
   if (state.mode === m) return;
@@ -470,8 +470,8 @@ function setMode(m) {
   syncTruthBtn();
   draw();
   addLog(m === 'challenge'
-    ? '切换到挑战模式：f 隐藏，只给少量样本提示，靠推断。'
-    : '切换到训练模式：f 全程可见，纯构造练习。', 'highlight');
+    ? 'Switched to Challenge mode: f is hidden, only a few sample hints — deduce it.'
+    : 'Switched to Training mode: f is always visible, pure construction practice.', 'highlight');
 }
 
 function genHints() {
@@ -488,7 +488,7 @@ function syncTruthBtn() {
   const b = document.getElementById('btn-truth');
   if (!b) return;
   b.className = 'tool-btn' + (state.showTruth ? ' on' : '');
-  b.textContent = state.showTruth ? '👁 背景: 真实 f' : '👁 背景: 算法预测';
+  b.textContent = state.showTruth ? '👁 Background: true f' : '👁 Background: prediction';
 }
 
 function updateModeUI() {
@@ -496,16 +496,16 @@ function updateModeUI() {
     const b = document.getElementById('mode-'+m);
     if (b) b.className = 'tool-btn' + (state.mode===m ? ' on' : '');
   });
-  // 挑战模式不许偷看 f
+  // No peeking at f in challenge mode
   const tb = document.getElementById('btn-truth');
   if (tb) tb.style.display = state.mode === 'challenge' ? 'none' : '';
   const help = document.getElementById('help-text');
   if (help) help.innerHTML = state.mode === 'challenge'
-    ? '<b>f 已隐藏！</b>◇ 菱形 = f 的已知样本点。背景 = kNN 当前预测。<br>靠样本推断 f 的规律，构造对抗训练集，提交后才揭晓得分。'
-    : '背景色 = <b>真实函数 f</b>（攻击目标）。让 kNN 染色尽量和背景<b>相反</b>，<br>右侧「实时错误率」越高越好，然后提交验证。';
+    ? '<b>f is hidden!</b> ◇ diamonds = known sample points of f. Background = kNN\'s current prediction.<br>Infer the pattern of f from the samples, build an adversarial training set, then submit to reveal your score.'
+    : 'Background = <b>true function f</b> (your target). Make kNN\'s coloring as <b>opposite</b> to the background as possible —<br>the higher the "live error rate" on the right, the better. Then submit to verify.';
 }
 
-// 对全部「非训练格子」实时计算算法的错误率（即你的对抗成效）
+// Live-compute the algorithm's error over all non-training cells (i.e. how well your attack works)
 function updateLive() {
   const el = document.getElementById('live-rate');
   if (!el) return;
@@ -585,16 +585,16 @@ function getCurrentFn() {
 function submitRound() {
   const pts = Object.keys(state.training);
   if (pts.length < 2) {
-    addLog('请至少放 2 个训练点！', 'bad');
+    addLog('Place at least 2 training points!', 'bad');
     return;
   }
 
   state.phase = 'result';
   document.getElementById('phase-indicator').className = 'phase-indicator result';
-  document.getElementById('phase-indicator').textContent = '— 测试阶段：揭示真实函数 —';
+  document.getElementById('phase-indicator').textContent = '— Test phase: revealing the true function —';
 
   const fn = getCurrentFn();
-  // Sample 30 test points (not on training points)
+  // Sample test points (not on training points)
   const trainKeys = new Set(Object.keys(state.training));
   const candidates = [];
   for (let r=0; r<GRID; r++) for (let c=0; c<GRID; c++) {
@@ -621,12 +621,12 @@ function submitRound() {
   el.textContent = pct + '%';
   el.className = 'stat-val ' + (pct>=60?'good': pct>=40?'mid':'bad');
   document.getElementById('error-rate-sub').textContent =
-    pct>=60 ? '出色！你找到了让它失败的数据集' :
-    pct>=40 ? '不错，1-NN 明显出错了' :
-    '可以更好——1-NN 大体猜对了';
+    pct>=60 ? 'Excellent! You found a dataset that makes it fail' :
+    pct>=40 ? 'Nice, kNN clearly got tripped up' :
+    'You can do better — kNN mostly guessed right';
 
-  addLog(`第${state.round+1}关：真实函数 = "${fn.name}"`, 'highlight');
-  addLog(`错误率 ${pct}% (${wrong}/${state.testPoints.length} 测试点错误)`,
+  addLog(`Level ${state.round+1}: true function = "${fn.name}"`, 'highlight');
+  addLog(`Error rate ${pct}% (${wrong}/${state.testPoints.length} test points wrong)`,
     pct>=60?'good': pct>=40?'':'bad');
 
   updateRoundDots();
@@ -636,7 +636,7 @@ function submitRound() {
   const nextBtn = document.getElementById('next-btn');
   nextBtn.style.display = 'block';
   if (state.round >= ROUNDS-1) {
-    nextBtn.textContent = '查看最终结果 →';
+    nextBtn.textContent = 'See final results →';
   }
 }
 
@@ -650,9 +650,9 @@ function nextRound() {
   state.training = {};
   state.testPoints = [];
   document.getElementById('phase-indicator').className = 'phase-indicator design';
-  document.getElementById('phase-indicator').textContent = '— 设计阶段：放置训练点 —';
+  document.getElementById('phase-indicator').textContent = '— Design phase: place training points —';
   document.getElementById('error-rate-val').textContent = '—';
-  document.getElementById('error-rate-sub').textContent = '提交后揭示';
+  document.getElementById('error-rate-sub').textContent = 'Revealed after submit';
   document.getElementById('submit-btn').style.display = 'block';
   document.getElementById('next-btn').style.display = 'none';
   document.getElementById('reveal-overlay').classList.remove('show');
@@ -660,8 +660,8 @@ function nextRound() {
   const fn = getCurrentFn();
   if (state.mode === 'challenge') genHints();
   addLog(state.mode === 'challenge'
-    ? `第${state.round+1}关开始 — f 已隐藏，看 ◇ 样本推断规律`
-    : `第${state.round+1}关开始 — 真实函数 f = "${fn.name}"`, 'highlight');
+    ? `Level ${state.round+1} begins — f is hidden, read the ◇ samples to deduce it`
+    : `Level ${state.round+1} begins — true function f = "${fn.name}"`, 'highlight');
   updateRoundDots();
   draw();
 }
@@ -672,21 +672,21 @@ function showFinal() {
   const overlay = document.getElementById('reveal-overlay');
   overlay.classList.add('show');
   document.getElementById('reveal-title').textContent =
-    pct >= 60 ? `平均错误率 ${pct}% — 你是对抗大师` :
-    pct >= 40 ? `平均错误率 ${pct}% — 1-NN 挣扎了` :
-    `平均错误率 ${pct}% — 1-NN 轻松胜出`;
+    pct >= 60 ? `Avg error ${pct}% — you're an adversarial master` :
+    pct >= 40 ? `Avg error ${pct}% — kNN struggled` :
+    `Avg error ${pct}% — kNN won easily`;
   document.getElementById('reveal-sub').textContent =
-    `NFL 定理：总存在让任何算法失败的分布。你找到了吗？`;
+    `NFL theorem: there's always a distribution that makes any algorithm fail. Did you find it?`;
 
-  addLog('--- 游戏结束 ---', 'highlight');
-  addLog(`平均错误率：${pct}%`, pct>=50?'good':'bad');
-  addLog('NFL: 对任意算法，总有分布让它失败。', '');
+  addLog('--- Game over ---', 'highlight');
+  addLog(`Average error rate: ${pct}%`, pct>=50?'good':'bad');
+  addLog('NFL: for any algorithm, some distribution makes it fail.', '');
 
   // Add restart button
   const btn = document.createElement('button');
   btn.className = 'action-btn secondary';
   btn.style.marginTop = '12px';
-  btn.textContent = '再来一局';
+  btn.textContent = 'Play again';
   btn.onclick = restartGame;
   overlay.appendChild(btn);
 }
@@ -704,9 +704,9 @@ function restartGame() {
   updateModeUI();
   syncTruthBtn();
   document.getElementById('phase-indicator').className = 'phase-indicator design';
-  document.getElementById('phase-indicator').textContent = '— 设计阶段：放置训练点 —';
+  document.getElementById('phase-indicator').textContent = '— Design phase: place training points —';
   document.getElementById('error-rate-val').textContent = '—';
-  document.getElementById('error-rate-sub').textContent = '提交后揭示';
+  document.getElementById('error-rate-sub').textContent = 'Revealed after submit';
   document.getElementById('submit-btn').style.display = 'block';
   document.getElementById('next-btn').style.display = 'none';
   const overlay = document.getElementById('reveal-overlay');
@@ -716,8 +716,8 @@ function restartGame() {
   updateRoundDots();
   draw();
   addLog(state.mode === 'challenge'
-    ? '新游戏开始（挑战模式）。f 隐藏，看 ◇ 样本推断。'
-    : `新游戏开始。真实函数 f = "${getCurrentFn().name}"`, 'highlight');
+    ? 'New game (Challenge mode). f is hidden — read the ◇ samples to deduce it.'
+    : `New game. True function f = "${getCurrentFn().name}"`, 'highlight');
 }
 
 function shuffleRounds() {
@@ -736,7 +736,7 @@ resize();
 updateModeUI();
 syncTruthBtn();
 updateRoundDots();
-addLog(`游戏开始（训练模式）。真实函数 f = "${getCurrentFn().name}" — 构造训练集让 kNN 在它上面犯错。`, 'highlight');
+addLog(`Game start (Training mode). True function f = "${getCurrentFn().name}" — build a training set that makes kNN fail on it.`, 'highlight');
 </script>
 </body>
 </html>
