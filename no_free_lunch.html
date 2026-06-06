@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>No Free Lunch — 打败学习算法</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800&display=swap');
+
+:root {
+  --bg: #0a0a0f;
+  --surface: #111118;
+  --surface2: #1a1a24;
+  --border: #2a2a3a;
+  --border2: #3a3a50;
+  --red: #e84040;
+  --red-dim: #6b1f1f;
+  --blue: #3a7fff;
+  --blue-dim: #1a3566;
+  --green: #2dcc70;
+  --green-dim: #1a5a35;
+  --amber: #f5a623;
+  --amber-dim: #5a3d0f;
+  --text: #e8e8f0;
+  --text2: #8888a8;
+  --text3: #444460;
+  --mono: 'Space Mono', monospace;
+  --sans: 'Syne', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px 40px;
+}
+
+header {
+  width: 100%;
+  max-width: 900px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 16px;
+}
+
+.title-row { display: flex; align-items: baseline; gap: 16px; margin-bottom: 4px; }
+h1 { font-family: var(--sans); font-size: 22px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); }
+.subtitle { font-size: 11px; color: var(--text2); letter-spacing: 0.1em; }
+.theorem-tag {
+  font-size: 10px; font-family: var(--mono);
+  background: var(--amber-dim); color: var(--amber);
+  padding: 3px 8px; border-radius: 2px; letter-spacing: 0.05em;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 16px;
+  width: 100%;
+  max-width: 900px;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 16px;
+}
+
+.panel-label {
+  font-size: 10px; color: var(--text3); letter-spacing: 0.12em;
+  text-transform: uppercase; margin-bottom: 12px;
+}
+
+/* Grid */
+#grid-wrap { position: relative; width: 100%; aspect-ratio: 1; }
+canvas { display: block; width: 100%; height: 100%; border-radius: 2px; cursor: crosshair; }
+#grid-canvas { position: absolute; top:0; left:0; }
+#overlay-canvas { position: absolute; top:0; left:0; }
+
+/* Toolbar */
+.toolbar {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 12px; flex-wrap: wrap;
+}
+.tool-btn {
+  font-family: var(--mono); font-size: 11px;
+  padding: 5px 12px; border-radius: 2px; cursor: pointer;
+  border: 1px solid var(--border2); background: var(--surface2); color: var(--text2);
+  transition: all 0.15s;
+}
+.tool-btn:hover { color: var(--text); border-color: var(--text3); }
+.tool-btn.active-red { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+.tool-btn.active-blue { background: var(--blue-dim); border-color: var(--blue); color: var(--blue); }
+.tool-btn.active-erase { background: var(--surface2); border-color: var(--text2); color: var(--text); }
+.sep { width: 1px; height: 18px; background: var(--border); }
+.tool-btn.on { background: var(--amber-dim); border-color: var(--amber); color: var(--amber); }
+.tool-label { font-size: 10px; color: var(--text3); letter-spacing: 0.05em; }
+
+/* Side panel */
+.side { display: flex; flex-direction: column; gap: 12px; }
+
+.stat-block { padding: 12px; background: var(--surface2); border-radius: 2px; border: 1px solid var(--border); }
+.stat-label { font-size: 10px; color: var(--text3); letter-spacing: 0.1em; margin-bottom: 6px; }
+.stat-val { font-family: var(--sans); font-size: 28px; font-weight: 800; }
+.stat-val.good { color: var(--green); }
+.stat-val.mid { color: var(--amber); }
+.stat-val.bad { color: var(--red); }
+.stat-sub { font-size: 10px; color: var(--text2); margin-top: 2px; }
+
+.phase-indicator {
+  font-size: 10px; padding: 6px 10px; border-radius: 2px;
+  border: 1px solid var(--border);
+}
+.phase-indicator.design { border-color: var(--blue); color: var(--blue); background: var(--blue-dim); }
+.phase-indicator.testing { border-color: var(--amber); color: var(--amber); background: var(--amber-dim); }
+.phase-indicator.result { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+
+.action-btn {
+  font-family: var(--sans); font-weight: 700; font-size: 13px;
+  padding: 10px 16px; border-radius: 2px; cursor: pointer; width: 100%;
+  border: none; transition: all 0.15s; letter-spacing: 0.02em;
+}
+.action-btn.primary { background: var(--amber); color: #000; }
+.action-btn.primary:hover { background: #ffb733; }
+.action-btn.primary:disabled { background: var(--amber-dim); color: var(--text3); cursor: default; }
+.action-btn.secondary { background: var(--surface2); color: var(--text2); border: 1px solid var(--border2); }
+.action-btn.secondary:hover { color: var(--text); border-color: var(--text3); }
+
+.legend { display: flex; flex-direction: column; gap: 6px; }
+.legend-row { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text2); }
+.dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.dot.red { background: var(--red); }
+.dot.blue { background: var(--blue); }
+.dot.red-test { background: var(--red); border: 2px solid #fff; }
+.dot.blue-test { background: var(--blue); border: 2px solid #fff; }
+
+.log {
+  font-size: 10px; color: var(--text2); line-height: 1.8;
+  max-height: 120px; overflow-y: auto;
+}
+.log-entry { color: var(--text3); }
+.log-entry.highlight { color: var(--amber); }
+.log-entry.good { color: var(--green); }
+.log-entry.bad { color: var(--red); }
+
+.round-indicator {
+  display: flex; gap: 4px; flex-wrap: wrap;
+}
+.round-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--border2);
+}
+.round-dot.won { background: var(--green); }
+.round-dot.lost { background: var(--red-dim); border: 1px solid var(--red); }
+.round-dot.current { background: var(--amber); }
+
+.nfl-box {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 2px; padding: 10px;
+  font-size: 10px; color: var(--text2); line-height: 1.7;
+}
+.nfl-box strong { color: var(--amber); font-weight: 700; }
+
+.reveal-overlay {
+  position: absolute; top:0; left:0; width:100%; height:100%;
+  display: none; align-items: center; justify-content: center;
+  background: rgba(10,10,15,0.85); border-radius: 2px; z-index: 10;
+  flex-direction: column; gap: 8px;
+}
+.reveal-overlay.show { display: flex; }
+.reveal-title { font-family: var(--sans); font-size: 20px; font-weight: 800; }
+.reveal-sub { font-size: 11px; color: var(--text2); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title-row">
+    <h1>No Free Lunch</h1>
+    <span class="theorem-tag">∀A ∃f : L(A,f) = chance</span>
+  </div>
+  <div class="subtitle">设计对抗训练集 · 让 1-NN 在测试集上彻底失败</div>
+</header>
+
+<div class="layout">
+  <!-- Left: canvas -->
+  <div>
+    <div class="toolbar">
+      <span class="tool-label">模式</span>
+      <button class="tool-btn on" id="mode-training" onclick="setMode('training')">🎯 训练模式</button>
+      <button class="tool-btn" id="mode-challenge" onclick="setMode('challenge')">🎲 挑战模式</button>
+    </div>
+    <div class="toolbar">
+      <button class="tool-btn active-red" id="btn-red" onclick="setTool('red')">+ 红点 (class A)</button>
+      <button class="tool-btn" id="btn-blue" onclick="setTool('blue')">+ 蓝点 (class B)</button>
+      <div class="sep"></div>
+      <button class="tool-btn" id="btn-erase" onclick="setTool('erase')">橡皮擦</button>
+      <button class="tool-btn" onclick="clearTraining()">清空</button>
+    </div>
+    <div class="toolbar">
+      <span class="tool-label">对手算法</span>
+      <button class="tool-btn on" id="btn-k1" onclick="setK(1)">1-NN</button>
+      <button class="tool-btn" id="btn-k3" onclick="setK(3)">3-NN</button>
+      <button class="tool-btn" id="btn-k5" onclick="setK(5)">5-NN</button>
+      <div class="sep"></div>
+      <button class="tool-btn on" id="btn-truth" onclick="toggleTruth()">👁 背景: 真实 f</button>
+    </div>
+    <div class="panel" style="padding: 10px;">
+      <div id="grid-wrap">
+        <canvas id="grid-canvas"></canvas>
+        <canvas id="overlay-canvas"></canvas>
+        <div class="reveal-overlay" id="reveal-overlay">
+          <div class="reveal-title" id="reveal-title"></div>
+          <div class="reveal-sub" id="reveal-sub"></div>
+        </div>
+      </div>
+    </div>
+    <div id="help-text" style="margin-top:8px; font-size:10px; color:var(--text3); line-height:1.6"></div>
+  </div>
+
+  <!-- Right: side panel -->
+  <div class="side">
+
+    <div>
+      <div class="panel-label">当前状态</div>
+      <div id="phase-indicator" class="phase-indicator design">— 设计阶段：放置训练点 —</div>
+    </div>
+
+    <div>
+      <div class="panel-label">关卡进度</div>
+      <div class="round-indicator" id="round-dots"></div>
+    </div>
+
+    <div>
+      <div class="panel-label">实时错误率（vs 真实 f）</div>
+      <div class="stat-block">
+        <div class="stat-val" id="live-rate">—</div>
+        <div class="stat-sub">放点时实时更新 · 越高越好</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel-label">本轮错误率</div>
+      <div class="stat-block">
+        <div class="stat-val" id="error-rate-val">—</div>
+        <div class="stat-sub" id="error-rate-sub">提交后揭示</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel-label">图例</div>
+      <div class="legend">
+        <div class="legend-row"><div class="dot red"></div>训练点 class A</div>
+        <div class="legend-row"><div class="dot blue"></div>训练点 class B</div>
+        <div class="legend-row"><div class="dot red" style="opacity:0.4; border:1.5px solid var(--red)"></div>1-NN 预测 A 区域</div>
+        <div class="legend-row"><div class="dot blue" style="opacity:0.4; border:1.5px solid var(--blue)"></div>1-NN 预测 B 区域</div>
+        <div class="legend-row"><div class="dot" style="background:#fff; width:10px;height:10px; border-radius:50%;"></div>测试点（X = 预测错误）</div>
+      </div>
+    </div>
+
+    <button class="action-btn primary" id="submit-btn" onclick="submitRound()">提交训练集 →</button>
+    <button class="action-btn secondary" id="next-btn" onclick="nextRound()" style="display:none">下一关 →</button>
+
+    <div>
+      <div class="panel-label">实验日志</div>
+      <div class="log" id="log"></div>
+    </div>
+
+    <div class="nfl-box">
+      <strong>No Free Lunch 定理</strong><br>
+      对任意学习算法 A，存在一个目标函数 f，使得 A 的期望误差不优于随机猜测。<br>
+      你的任务：找到让 1-NN 失败的 f。
+    </div>
+
+  </div>
+</div>
+
+<script>
+const GRID = 16;
+const ROUNDS = 5;
+
+const trueFunctions = [
+  { name: '左红右蓝（垂直切割）', fn: (r,c) => c < GRID/2 ? 'red' : 'blue' },
+  { name: '上红下蓝（水平切割）', fn: (r,c) => r < GRID/2 ? 'red' : 'blue' },
+  { name: '棋盘格', fn: (r,c) => (r+c)%2===0 ? 'red' : 'blue' },
+  { name: '圆形区域（内红外蓝）', fn: (r,c) => { const dr=r-GRID/2, dc=c-GRID/2; return dr*dr+dc*dc < (GRID/3)*(GRID/3) ? 'red':'blue'; } },
+  { name: '对角线分割', fn: (r,c) => r+c < GRID ? 'red' : 'blue' },
+  { name: '条纹（3格宽）', fn: (r,c) => Math.floor(c/3)%2===0 ? 'red':'blue' },
+  { name: '四象限（红蓝交替）', fn: (r,c) => { const qr=r<GRID/2, qc=c<GRID/2; return (qr&&qc)||(!qr&&!qc)?'red':'blue'; } },
+  { name: '随机棋盘（稀疏）', fn: (r,c) => ((r*7+c*13)%5 < 2) ? 'red':'blue' },
+];
+
+let state = {
+  phase: 'design',
+  tool: 'red',
+  training: {},
+  round: 0,
+  roundOrder: [],
+  scores: [],
+  testPoints: [],
+  k: 1,
+  showTruth: true,
+  mode: 'training',   // 'training' = f 可见, 'challenge' = f 隐藏+样本提示
+  hints: [],
+};
+
+const gCanvas = document.getElementById('grid-canvas');
+const oCanvas = document.getElementById('overlay-canvas');
+const gc = gCanvas.getContext('2d');
+const oc = oCanvas.getContext('2d');
+
+function resize() {
+  const wrap = document.getElementById('grid-wrap');
+  const w = wrap.clientWidth;
+  [gCanvas, oCanvas].forEach(c => { c.width = w; c.height = w; });
+  draw();
+}
+
+function cellSize() { return gCanvas.width / GRID; }
+
+function gridCoords(e) {
+  const rect = oCanvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (oCanvas.width / rect.width);
+  const y = (e.clientY - rect.top) * (oCanvas.height / rect.height);
+  const cs = cellSize();
+  return { r: Math.floor(y/cs), c: Math.floor(x/cs) };
+}
+
+function hexToRgba(hex, a) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+function knnPredict(r, c, k=state.k) {
+  const pts = Object.entries(state.training);
+  if (pts.length === 0) return null;
+  const dists = pts.map(([key, cls]) => {
+    const [tr, tc] = key.split(',').map(Number);
+    return { d: (r-tr)**2 + (c-tc)**2, cls };
+  }).sort((a,b) => a.d-b.d);
+  const votes = {};
+  for (let i=0; i<Math.min(k, dists.length); i++) {
+    votes[dists[i].cls] = (votes[dists[i].cls]||0)+1;
+  }
+  return Object.entries(votes).sort((a,b)=>b[1]-a[1])[0][0];
+}
+
+function draw() {
+  const cs = cellSize();
+  gc.clearRect(0, 0, gCanvas.width, gCanvas.height);
+  oc.clearRect(0, 0, oCanvas.width, oCanvas.height);
+
+  const hasPts = Object.keys(state.training).length > 0;
+  const fn = getCurrentFn();
+
+  for (let r=0; r<GRID; r++) {
+    for (let c=0; c<GRID; c++) {
+      const x = c*cs, y = r*cs;
+      if ((state.showTruth || state.phase === 'result') && fn) {
+        // 背景 = 真实函数 f（你的攻击目标）
+        const t = fn.fn(r, c);
+        gc.fillStyle = t === 'red' ? 'rgba(232,64,64,0.16)' : 'rgba(58,127,255,0.16)';
+        gc.fillRect(x, y, cs, cs);
+      } else if (hasPts) {
+        // 背景 = 算法的 Voronoi 预测
+        const pred = knnPredict(r, c);
+        if (pred === 'red') gc.fillStyle = 'rgba(232,64,64,0.13)';
+        else if (pred === 'blue') gc.fillStyle = 'rgba(58,127,255,0.13)';
+        else gc.fillStyle = 'transparent';
+        gc.fillRect(x, y, cs, cs);
+      }
+      gc.strokeStyle = '#1a1a28';
+      gc.lineWidth = 0.5;
+      gc.strokeRect(x, y, cs, cs);
+    }
+  }
+  updateLive();
+
+  // Training points
+  for (const [key, cls] of Object.entries(state.training)) {
+    const [r,c] = key.split(',').map(Number);
+    const x = c*cs + cs/2, y = r*cs + cs/2;
+    const radius = cs * 0.32;
+    oc.beginPath();
+    oc.arc(x, y, radius, 0, Math.PI*2);
+    oc.fillStyle = cls === 'red' ? '#e84040' : '#3a7fff';
+    oc.fill();
+    oc.strokeStyle = cls === 'red' ? '#ff6060' : '#70aaff';
+    oc.lineWidth = 1.5;
+    oc.stroke();
+  }
+
+  // Hint samples (challenge mode, before reveal)
+  if (state.mode === 'challenge' && state.phase !== 'result') {
+    for (const h of state.hints) {
+      const x = h.c*cs + cs/2, y = h.r*cs + cs/2, s = cs*0.26;
+      oc.save();
+      oc.translate(x, y); oc.rotate(Math.PI/4);
+      oc.strokeStyle = h.truth === 'red' ? '#e84040' : '#3a7fff';
+      oc.lineWidth = 2.5;
+      oc.strokeRect(-s, -s, 2*s, 2*s);
+      oc.restore();
+    }
+  }
+
+  // Test points (after submission)
+  if (state.phase === 'result') {
+    for (const pt of state.testPoints) {
+      const x = pt.c*cs + cs/2, y = pt.r*cs + cs/2;
+      const correct = pt.pred === pt.truth;
+      oc.beginPath();
+      oc.arc(x, y, cs*0.22, 0, Math.PI*2);
+      oc.fillStyle = pt.truth === 'red' ? 'rgba(232,64,64,0.85)' : 'rgba(58,127,255,0.85)';
+      oc.fill();
+      oc.strokeStyle = '#ffffff';
+      oc.lineWidth = 1.5;
+      oc.stroke();
+      if (!correct) {
+        // Draw X
+        const s = cs*0.18;
+        oc.strokeStyle = '#ffffff';
+        oc.lineWidth = 2;
+        oc.beginPath(); oc.moveTo(x-s,y-s); oc.lineTo(x+s,y+s); oc.stroke();
+        oc.beginPath(); oc.moveTo(x+s,y-s); oc.lineTo(x-s,y+s); oc.stroke();
+      }
+    }
+  }
+}
+
+function setTool(t) {
+  state.tool = t;
+  ['red','blue','erase'].forEach(id => {
+    const btn = document.getElementById('btn-'+id);
+    if (btn) btn.className = 'tool-btn' + (t===id ? ` active-${id}`:'');
+  });
+}
+
+function setK(k) {
+  state.k = k;
+  [1,3,5].forEach(v => {
+    const b = document.getElementById('btn-k'+v);
+    if (b) b.className = 'tool-btn' + (v===k ? ' on' : '');
+  });
+  draw();
+}
+
+function toggleTruth() {
+  state.showTruth = !state.showTruth;
+  const b = document.getElementById('btn-truth');
+  b.className = 'tool-btn' + (state.showTruth ? ' on' : '');
+  b.textContent = state.showTruth ? '👁 背景: 真实 f' : '👁 背景: 算法预测';
+  draw();
+}
+
+const HINT_COUNT = 8;  // 挑战模式给出的 f 样本提示数（设 0 即纯运气）
+
+function setMode(m) {
+  if (state.mode === m) return;
+  state.mode = m;
+  state.showTruth = (m === 'training');
+  if (m === 'challenge') genHints();
+  updateModeUI();
+  syncTruthBtn();
+  draw();
+  addLog(m === 'challenge'
+    ? '切换到挑战模式：f 隐藏，只给少量样本提示，靠推断。'
+    : '切换到训练模式：f 全程可见，纯构造练习。', 'highlight');
+}
+
+function genHints() {
+  const fn = getCurrentFn();
+  state.hints = [];
+  if (!fn) return;
+  const cells = [];
+  for (let r=0; r<GRID; r++) for (let c=0; c<GRID; c++) cells.push({r,c});
+  for (let i=cells.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [cells[i],cells[j]]=[cells[j],cells[i]]; }
+  state.hints = cells.slice(0, HINT_COUNT).map(({r,c}) => ({r, c, truth: fn.fn(r,c)}));
+}
+
+function syncTruthBtn() {
+  const b = document.getElementById('btn-truth');
+  if (!b) return;
+  b.className = 'tool-btn' + (state.showTruth ? ' on' : '');
+  b.textContent = state.showTruth ? '👁 背景: 真实 f' : '👁 背景: 算法预测';
+}
+
+function updateModeUI() {
+  ['training','challenge'].forEach(m => {
+    const b = document.getElementById('mode-'+m);
+    if (b) b.className = 'tool-btn' + (state.mode===m ? ' on' : '');
+  });
+  // 挑战模式不许偷看 f
+  const tb = document.getElementById('btn-truth');
+  if (tb) tb.style.display = state.mode === 'challenge' ? 'none' : '';
+  const help = document.getElementById('help-text');
+  if (help) help.innerHTML = state.mode === 'challenge'
+    ? '<b>f 已隐藏！</b>◇ 菱形 = f 的已知样本点。背景 = kNN 当前预测。<br>靠样本推断 f 的规律，构造对抗训练集，提交后才揭晓得分。'
+    : '背景色 = <b>真实函数 f</b>（攻击目标）。让 kNN 染色尽量和背景<b>相反</b>，<br>右侧「实时错误率」越高越好，然后提交验证。';
+}
+
+// 对全部「非训练格子」实时计算算法的错误率（即你的对抗成效）
+function updateLive() {
+  const el = document.getElementById('live-rate');
+  if (!el) return;
+  if (state.mode === 'challenge' && state.phase !== 'result') {
+    el.textContent = '?'; el.className = 'stat-val'; return;
+  }
+  const fn = getCurrentFn();
+  const pts = Object.keys(state.training);
+  if (!fn || pts.length === 0) { el.textContent = '—'; el.className = 'stat-val'; return; }
+  const trainKeys = new Set(pts);
+  let wrong = 0, total = 0;
+  for (let r=0; r<GRID; r++) for (let c=0; c<GRID; c++) {
+    if (trainKeys.has(`${r},${c}`)) continue;
+    total++;
+    if (knnPredict(r,c) !== fn.fn(r,c)) wrong++;
+  }
+  const pct = total ? Math.round(wrong/total*100) : 0;
+  el.textContent = pct + '%';
+  el.className = 'stat-val ' + (pct>=60?'good': pct>=40?'mid':'bad');
+}
+
+let painting = false;
+oCanvas.addEventListener('mousedown', e => { painting = true; handlePaint(e); });
+oCanvas.addEventListener('mousemove', e => { if(painting) handlePaint(e); });
+window.addEventListener('mouseup', () => { painting = false; });
+
+oCanvas.addEventListener('touchstart', e => { e.preventDefault(); painting=true; handlePaint(e.touches[0]); }, {passive:false});
+oCanvas.addEventListener('touchmove', e => { e.preventDefault(); if(painting) handlePaint(e.touches[0]); }, {passive:false});
+window.addEventListener('touchend', () => { painting=false; });
+
+function handlePaint(e) {
+  if (state.phase !== 'design') return;
+  const {r,c} = gridCoords(e);
+  if (r<0||r>=GRID||c<0||c>=GRID) return;
+  const key = `${r},${c}`;
+  if (state.tool === 'erase') {
+    delete state.training[key];
+  } else {
+    state.training[key] = state.tool;
+  }
+  draw();
+}
+
+function clearTraining() {
+  state.training = {};
+  draw();
+}
+
+function addLog(msg, cls='') {
+  const log = document.getElementById('log');
+  const d = document.createElement('div');
+  d.className = 'log-entry ' + cls;
+  d.textContent = '> ' + msg;
+  log.insertBefore(d, log.firstChild);
+}
+
+function updateRoundDots() {
+  const wrap = document.getElementById('round-dots');
+  wrap.innerHTML = '';
+  for (let i=0; i<ROUNDS; i++) {
+    const d = document.createElement('div');
+    if (i < state.scores.length) {
+      d.className = 'round-dot ' + (state.scores[i] >= 0.5 ? 'won' : 'lost');
+    } else if (i === state.round) {
+      d.className = 'round-dot current';
+    } else {
+      d.className = 'round-dot';
+    }
+    wrap.appendChild(d);
+  }
+}
+
+function getCurrentFn() {
+  return trueFunctions[state.roundOrder[state.round]];
+}
+
+function submitRound() {
+  const pts = Object.keys(state.training);
+  if (pts.length < 2) {
+    addLog('请至少放 2 个训练点！', 'bad');
+    return;
+  }
+
+  state.phase = 'result';
+  document.getElementById('phase-indicator').className = 'phase-indicator result';
+  document.getElementById('phase-indicator').textContent = '— 测试阶段：揭示真实函数 —';
+
+  const fn = getCurrentFn();
+  // Sample 30 test points (not on training points)
+  const trainKeys = new Set(Object.keys(state.training));
+  const candidates = [];
+  for (let r=0; r<GRID; r++) for (let c=0; c<GRID; c++) {
+    if (!trainKeys.has(`${r},${c}`)) candidates.push({r,c});
+  }
+  // shuffle
+  for (let i=candidates.length-1;i>0;i--) {
+    const j=Math.floor(Math.random()*(i+1));
+    [candidates[i],candidates[j]]=[candidates[j],candidates[i]];
+  }
+  const sample = candidates.slice(0, Math.min(40, candidates.length));
+  state.testPoints = sample.map(({r,c}) => ({
+    r, c,
+    truth: fn.fn(r,c),
+    pred: knnPredict(r,c),
+  }));
+
+  const wrong = state.testPoints.filter(p => p.pred !== p.truth).length;
+  const errorRate = wrong / state.testPoints.length;
+  state.scores.push(errorRate);
+
+  const pct = Math.round(errorRate * 100);
+  const el = document.getElementById('error-rate-val');
+  el.textContent = pct + '%';
+  el.className = 'stat-val ' + (pct>=60?'good': pct>=40?'mid':'bad');
+  document.getElementById('error-rate-sub').textContent =
+    pct>=60 ? '出色！你找到了让它失败的数据集' :
+    pct>=40 ? '不错，1-NN 明显出错了' :
+    '可以更好——1-NN 大体猜对了';
+
+  addLog(`第${state.round+1}关：真实函数 = "${fn.name}"`, 'highlight');
+  addLog(`错误率 ${pct}% (${wrong}/${state.testPoints.length} 测试点错误)`,
+    pct>=60?'good': pct>=40?'':'bad');
+
+  updateRoundDots();
+  draw();
+
+  document.getElementById('submit-btn').style.display = 'none';
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.style.display = 'block';
+  if (state.round >= ROUNDS-1) {
+    nextBtn.textContent = '查看最终结果 →';
+  }
+}
+
+function nextRound() {
+  state.round++;
+  if (state.round >= ROUNDS) {
+    showFinal();
+    return;
+  }
+  state.phase = 'design';
+  state.training = {};
+  state.testPoints = [];
+  document.getElementById('phase-indicator').className = 'phase-indicator design';
+  document.getElementById('phase-indicator').textContent = '— 设计阶段：放置训练点 —';
+  document.getElementById('error-rate-val').textContent = '—';
+  document.getElementById('error-rate-sub').textContent = '提交后揭示';
+  document.getElementById('submit-btn').style.display = 'block';
+  document.getElementById('next-btn').style.display = 'none';
+  document.getElementById('reveal-overlay').classList.remove('show');
+
+  const fn = getCurrentFn();
+  if (state.mode === 'challenge') genHints();
+  addLog(state.mode === 'challenge'
+    ? `第${state.round+1}关开始 — f 已隐藏，看 ◇ 样本推断规律`
+    : `第${state.round+1}关开始 — 真实函数 f = "${fn.name}"`, 'highlight');
+  updateRoundDots();
+  draw();
+}
+
+function showFinal() {
+  const avg = state.scores.reduce((a,b)=>a+b,0)/state.scores.length;
+  const pct = Math.round(avg*100);
+  const overlay = document.getElementById('reveal-overlay');
+  overlay.classList.add('show');
+  document.getElementById('reveal-title').textContent =
+    pct >= 60 ? `平均错误率 ${pct}% — 你是对抗大师` :
+    pct >= 40 ? `平均错误率 ${pct}% — 1-NN 挣扎了` :
+    `平均错误率 ${pct}% — 1-NN 轻松胜出`;
+  document.getElementById('reveal-sub').textContent =
+    `NFL 定理：总存在让任何算法失败的分布。你找到了吗？`;
+
+  addLog('--- 游戏结束 ---', 'highlight');
+  addLog(`平均错误率：${pct}%`, pct>=50?'good':'bad');
+  addLog('NFL: 对任意算法，总有分布让它失败。', '');
+
+  // Add restart button
+  const btn = document.createElement('button');
+  btn.className = 'action-btn secondary';
+  btn.style.marginTop = '12px';
+  btn.textContent = '再来一局';
+  btn.onclick = restartGame;
+  overlay.appendChild(btn);
+}
+
+function restartGame() {
+  state = {
+    phase: 'design', tool: 'red',
+    training: {}, round: 0,
+    roundOrder: shuffleRounds(),
+    scores: [], testPoints: [],
+    k: state.k, showTruth: state.mode === 'training',
+    mode: state.mode, hints: [],
+  };
+  if (state.mode === 'challenge') genHints();
+  updateModeUI();
+  syncTruthBtn();
+  document.getElementById('phase-indicator').className = 'phase-indicator design';
+  document.getElementById('phase-indicator').textContent = '— 设计阶段：放置训练点 —';
+  document.getElementById('error-rate-val').textContent = '—';
+  document.getElementById('error-rate-sub').textContent = '提交后揭示';
+  document.getElementById('submit-btn').style.display = 'block';
+  document.getElementById('next-btn').style.display = 'none';
+  const overlay = document.getElementById('reveal-overlay');
+  overlay.classList.remove('show');
+  overlay.innerHTML = `<div class="reveal-title" id="reveal-title"></div><div class="reveal-sub" id="reveal-sub"></div>`;
+  document.getElementById('log').innerHTML = '';
+  updateRoundDots();
+  draw();
+  addLog(state.mode === 'challenge'
+    ? '新游戏开始（挑战模式）。f 隐藏，看 ◇ 样本推断。'
+    : `新游戏开始。真实函数 f = "${getCurrentFn().name}"`, 'highlight');
+}
+
+function shuffleRounds() {
+  const arr = Array.from({length: trueFunctions.length}, (_,i)=>i);
+  for (let i=arr.length-1;i>0;i--) {
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr.slice(0, ROUNDS);
+}
+
+// Init
+state.roundOrder = shuffleRounds();
+window.addEventListener('resize', () => { resize(); });
+resize();
+updateModeUI();
+syncTruthBtn();
+updateRoundDots();
+addLog(`游戏开始（训练模式）。真实函数 f = "${getCurrentFn().name}" — 构造训练集让 kNN 在它上面犯错。`, 'highlight');
+</script>
+</body>
+</html>
