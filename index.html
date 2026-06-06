@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Come Get Free Lunch · the No Free Lunch game</title>
-<meta name="description" content="A cute little café where the food is free and the learning algorithm always picks up the check. Built on the No Free Lunch theorem.">
+<meta name="description" content="A cute little café for the online No Free Lunch theorem, where the learner predicts first and the adversary serves the opposite label.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Shantell+Sans:ital,wght@0,300..800;1,300..700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -316,7 +316,7 @@ footer a:hover{text-decoration:underline}
         <a class="btn primary" href="online_nfl.html">Grab a tray <span class="arrow">→</span></a>
         <a class="btn secondary" href="no_free_lunch.html">Browse the kitchen</a>
       </div>
-      <p class="fineprint">*generalization sold separately. <code>∀A ∃f : L(A,f) = chance</code></p>
+      <p class="fineprint">*prediction served first; correct label arrives with the bill. <code>predict → reveal → update</code></p>
     </div>
 
     <div class="hero-visual">
@@ -384,19 +384,19 @@ footer a:hover{text-decoration:underline}
       <div>
         <span class="sec-tag" style="color:var(--tomato-d);background:#ffe6e2;border-color:var(--tomato)">THE FINE PRINT</span>
         <h2>There's no free lunch.</h2>
-        <p style="margin-top:14px">It's not a saying here — it's <span class="hl">an actual theorem</span>. For <b>every</b> learning algorithm, there's a world where it eats dirt.</p>
-        <p>Averaged over all possible worlds, <span class="rr">nobody</span> beats a coin flip. Your job is to <b>cook up that world</b>: arrange the <span class="rr">🍅 tomatoes</span> and <span class="bb">🫐 blueberries</span> so the algorithm guesses wrong, bite after bite.</p>
+        <p style="margin-top:14px">We are serving the <span class="hl">online version</span>. Each round, the learner sees an item, predicts <span class="rr">🍅 tomato</span> or <span class="bb">🫐 blueberry</span>, gets shown the true label, and updates. Predict first, inspect the receipt later.</p>
+        <p>Here is the catch: on a finite menu of <b>n</b> possible items, <b>any</b> learning rule has some labeling and some sequence that forces at least <b>n mistakes</b>. Serve each item once and make its true label the opposite of the learner's guess. With infinitely many fresh items, this can continue <b>every round</b>. The only universal defense on a small menu is memorization, which is learning's less glamorous cousin with excellent filing skills.</p>
         <p>The lunch really is free. <b>Generalization is what costs you</b> — paid in assumptions.</p>
       </div>
       <div class="receipt">
         <h3>·· THE BILL ··</h3>
-        <div class="r-sub">FREE LUNCH CAFÉ — table ∀A</div>
-        <div class="r-line"><span>1 × Lunch</span><span>$0.00</span></div>
-        <div class="r-line"><span>Tray of data</span><span>$0.00</span></div>
-        <div class="r-line"><span>A clever guess</span><span>$0.00</span></div>
-        <div class="r-line"><span>Generalizing it</span><span class="rr">∞</span></div>
-        <div class="r-total"><span>TOTAL</span><span class="pay">the algorithm pays</span></div>
-        <div class="r-stamp">★ NO REFUNDS ON ASSUMPTIONS ★</div>
+        <div class="r-sub">ONLINE SERVICE — table t = 1, 2, …</div>
+        <div class="r-line"><span>Receive x<sub>t</sub></span><span>📨</span></div>
+        <div class="r-line"><span>Predict ŷ<sub>t</sub></span><span>first</span></div>
+        <div class="r-line"><span>Reveal y<sub>t</sub></span><span>opposite</span></div>
+        <div class="r-line"><span>Update learner</span><span>too late</span></div>
+        <div class="r-total"><span>FINITE X</span><span class="pay">≥ |X| mistakes</span></div>
+        <div class="r-stamp">★ FRESH ITEM, FRESH REGRET ★</div>
       </div>
     </div>
   </section>
@@ -422,8 +422,8 @@ footer a:hover{text-decoration:underline}
 </main>
 
 <footer>
-  <span class="f-made">Made with 🥪 &amp; the No Free Lunch theorem.</span>
-  <span class="f-thm">∀A ∃f : L(A,f) = chance</span>
+  <span class="f-made">Made with 🥪 &amp; the online No Free Lunch theorem.</span>
+  <span class="f-thm">∀A ∃f, (xₜ): mistakes ≥ |X|</span>
   <a href="https://github.com/invariance3/GetFreeLunch" target="_blank" rel="noopener">view source on GitHub →</a>
 </footer>
 

@@ -131,6 +131,7 @@ canvas#board{display:block; width:100%; height:100%; border:2.5px solid var(--in
 .dot.blue{background:var(--blue)}
 .dot.red-test{background:var(--tomato); border:2px solid #fff}
 .dot.blue-test{background:var(--blue); border:2px solid #fff}
+.food-dot{width:20px; flex-shrink:0; text-align:center; font-size:16px; line-height:1}
 
 /* ---------- log ---------- */
 .log{font-family:var(--mono); font-size:10.5px; color:var(--ink-soft); line-height:1.7; max-height:120px; overflow-y:auto}
@@ -261,7 +262,7 @@ canvas#board{display:block; width:100%; height:100%; border:2.5px solid var(--in
 <header>
   <div class="title-row">
     <h1>Design an adversarial training set</h1>
-    <span class="theorem-tag">∀A ∃f : L(A,f) = chance</span>
+    <span class="theorem-tag">no assumptions → no universal winner</span>
   </div>
   <div class="subtitle">Design an adversarial training set · make kNN fail on the test set</div>
 </header>
@@ -276,8 +277,8 @@ canvas#board{display:block; width:100%; height:100%; border:2.5px solid var(--in
       <button class="tool-btn" id="mode-online" onclick="location.href='online_nfl.html'" title="Online NFL · Littlestone Duel">⚔️ Online NFL →</button>
     </div>
     <div class="toolbar">
-      <button class="tool-btn active-red" id="btn-red" onclick="setTool('red')">+ Red (class A)</button>
-      <button class="tool-btn" id="btn-blue" onclick="setTool('blue')">+ Blue (class B)</button>
+      <button class="tool-btn active-red" id="btn-red" onclick="setTool('red')">+ 🍅 Tomato</button>
+      <button class="tool-btn" id="btn-blue" onclick="setTool('blue')">+ 🫐 Blueberry</button>
       <div class="sep"></div>
       <button class="tool-btn" id="btn-erase" onclick="setTool('erase')">Eraser</button>
       <button class="tool-btn" onclick="clearTraining()">Clear</button>
@@ -335,10 +336,10 @@ canvas#board{display:block; width:100%; height:100%; border:2.5px solid var(--in
     <div>
       <div class="panel-label">Legend</div>
       <div class="legend">
-        <div class="legend-row"><div class="dot red"></div>Training point, class A</div>
-        <div class="legend-row"><div class="dot blue"></div>Training point, class B</div>
-        <div class="legend-row"><div class="dot red" style="opacity:0.4; border:1.5px solid var(--red)"></div>kNN predicts region A</div>
-        <div class="legend-row"><div class="dot blue" style="opacity:0.4; border:1.5px solid var(--blue)"></div>kNN predicts region B</div>
+        <div class="legend-row"><span class="food-dot">🍅</span>Tomato training point</div>
+        <div class="legend-row"><span class="food-dot">🫐</span>Blueberry training point</div>
+        <div class="legend-row"><div class="dot red" style="opacity:0.4; border:1.5px solid var(--red)"></div>kNN predicts tomato territory</div>
+        <div class="legend-row"><div class="dot blue" style="opacity:0.4; border:1.5px solid var(--blue)"></div>kNN predicts blueberry territory</div>
         <div class="legend-row"><div class="dot" style="background:#fff; width:10px;height:10px; border-radius:50%;"></div>Test point (X = wrong prediction)</div>
       </div>
     </div>
@@ -352,9 +353,9 @@ canvas#board{display:block; width:100%; height:100%; border:2.5px solid var(--in
     </div>
 
     <div class="nfl-box">
-      <strong>No Free Lunch theorem</strong><br>
-      For any learning algorithm A, there exists a target function f such that A's expected error is no better than random guessing.<br>
-      Your job: find the f (and data) that makes kNN fail.
+      <strong>No Free Lunch intuition</strong><br>
+      Without assumptions connecting seen examples to unseen labels, no learner can generalize well on every possible problem.<br>
+      This sandbox is the kitchen demo: choose data that clashes with kNN's nearest-neighbor assumption.
     </div>
 
   </div>
@@ -365,10 +366,10 @@ const GRID = 16;
 const ROUNDS = 5;
 
 const trueFunctions = [
-  { name: 'Left red / right blue (vertical split)', fn: (r,c) => c < GRID/2 ? 'red' : 'blue' },
-  { name: 'Top red / bottom blue (horizontal split)', fn: (r,c) => r < GRID/2 ? 'red' : 'blue' },
+  { name: 'Tomato left / blueberry right (vertical split)', fn: (r,c) => c < GRID/2 ? 'red' : 'blue' },
+  { name: 'Tomato top / blueberry bottom (horizontal split)', fn: (r,c) => r < GRID/2 ? 'red' : 'blue' },
   { name: 'Checkerboard', fn: (r,c) => (r+c)%2===0 ? 'red' : 'blue' },
-  { name: 'Circle (red inside, blue outside)', fn: (r,c) => { const dr=r-GRID/2, dc=c-GRID/2; return dr*dr+dc*dc < (GRID/3)*(GRID/3) ? 'red':'blue'; } },
+  { name: 'Circle (tomato inside, blueberry outside)', fn: (r,c) => { const dr=r-GRID/2, dc=c-GRID/2; return dr*dr+dc*dc < (GRID/3)*(GRID/3) ? 'red':'blue'; } },
   { name: 'Diagonal split', fn: (r,c) => r+c < GRID ? 'red' : 'blue' },
   { name: 'Stripes (3 cells wide)', fn: (r,c) => Math.floor(c/3)%2===0 ? 'red':'blue' },
   { name: 'Four quadrants (alternating)', fn: (r,c) => { const qr=r<GRID/2, qc=c<GRID/2; return (qr&&qc)||(!qr&&!qc)?'red':'blue'; } },
@@ -393,6 +394,16 @@ const gCanvas = document.getElementById('grid-canvas');
 const oCanvas = document.getElementById('overlay-canvas');
 const gc = gCanvas.getContext('2d');
 const oc = oCanvas.getContext('2d');
+
+function foodEmoji(cls) { return cls === 'red' ? '🍅' : '🫐'; }
+function drawFood(ctx, cls, x, y, size) {
+  ctx.save();
+  ctx.font = `${size}px "Apple Color Emoji","Segoe UI Emoji",sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(foodEmoji(cls), x, y + size * 0.03);
+  ctx.restore();
+}
 
 function resize() {
   const wrap = document.getElementById('grid-wrap');
@@ -465,14 +476,7 @@ function draw() {
   for (const [key, cls] of Object.entries(state.training)) {
     const [r,c] = key.split(',').map(Number);
     const x = c*cs + cs/2, y = r*cs + cs/2;
-    const radius = cs * 0.32;
-    oc.beginPath();
-    oc.arc(x, y, radius, 0, Math.PI*2);
-    oc.fillStyle = cls === 'red' ? '#ff5a4d' : '#4a82ff';
-    oc.fill();
-    oc.strokeStyle = cls === 'red' ? '#ff8a80' : '#8fb0ff';
-    oc.lineWidth = 1.5;
-    oc.stroke();
+    drawFood(oc, cls, x, y, cs * 0.75);
   }
 
   // Hint samples (challenge mode, before reveal)
@@ -493,13 +497,7 @@ function draw() {
     for (const pt of state.testPoints) {
       const x = pt.c*cs + cs/2, y = pt.r*cs + cs/2;
       const correct = pt.pred === pt.truth;
-      oc.beginPath();
-      oc.arc(x, y, cs*0.22, 0, Math.PI*2);
-      oc.fillStyle = pt.truth === 'red' ? 'rgba(255,90,77,0.85)' : 'rgba(74,130,255,0.85)';
-      oc.fill();
-      oc.strokeStyle = '#ffffff';
-      oc.lineWidth = 1.5;
-      oc.stroke();
+      drawFood(oc, pt.truth, x, y, cs * 0.62);
       if (!correct) {
         // Draw X
         const s = cs*0.18;
@@ -754,11 +752,11 @@ function showFinal() {
     pct >= 40 ? `Avg error ${pct}% — kNN struggled` :
     `Avg error ${pct}% — kNN won easily`;
   document.getElementById('reveal-sub').textContent =
-    `NFL theorem: there's always a distribution that makes any algorithm fail. Did you find it?`;
+    `No learner wins everywhere without assumptions. Today, kNN's lunch was your dataset.`;
 
   addLog('--- Game over ---', 'highlight');
   addLog(`Average error rate: ${pct}%`, pct>=50?'good':'bad');
-  addLog('NFL: for any algorithm, some distribution makes it fail.', '');
+  addLog('NFL intuition: without assumptions, no learner generalizes well on every problem.', '');
 
   // Add restart button
   const btn = document.createElement('button');
@@ -830,31 +828,31 @@ addLog(`Game start (Training mode). True function f = "${getCurrentFn().name}" �
     {
       title: 'No Free Lunch — the game',
       body: "<p>A learning algorithm called <b>kNN</b> will try to label every square of a grid. <b>You play the villain:</b> you design the data so it gets things <b>wrong</b>.</p>"
-          + "<p>That's the <b>No Free Lunch theorem</b> made physical — for any algorithm there's always a world where it fails. Your job is to build that world. This quick tour is interactive; you'll actually play a tiny round.</p>"
+          + "<p>This illustrates the <b>No Free Lunch</b> lesson: without assumptions connecting seen examples to unseen labels, no learner wins on every problem. Your job is to find a problem that disagrees spectacularly with kNN's assumptions. This quick tour is interactive; you'll actually play a tiny round.</p>"
     },
     {
       title: 'Step 1 · The hidden truth f',
-      body: "<p>Every square has a correct color, decided by a hidden rule called <b>f</b>. In this tutorial <b>f</b> = <span class='rr'>red</span> on the left half, <span class='bb'>blue</span> on the right.</p>"
+      body: "<p>Every square has a correct label, decided by a hidden rule called <b>f</b>. In this tutorial <b>f</b> = <span class='rr'>🍅 tomato</span> on the left half, <span class='bb'>🫐 blueberry</span> on the right.</p>"
           + "<p>The faint background <b>is</b> f — the answer key kNN is trying to match.</p>",
       demo: { show:true, showF:true, interactive:false }
     },
     {
       title: 'Step 2 · How kNN thinks',
-      body: "<p>kNN labels a square by finding the <b>nearest training point</b> you placed and copying its color. That carves the board into territories (a Voronoi diagram).</p>"
-          + "<p><b>Try it:</b> pick a color, then click squares to drop training points. Watch every cell snap to its nearest dot.</p>",
+      body: "<p>kNN labels a square by finding the <b>nearest training snack</b> you placed and copying its label. That carves the board into territories (a Voronoi diagram).</p>"
+          + "<p><b>Try it:</b> pick a snack, then click squares to drop training points. Watch every cell join its nearest bite.</p>",
       demo: { show:true, showPred:true, interactive:true, k:1, tools:['red','blue','reset'] }
     },
     {
       title: 'Step 3 · Your mission — make it fail',
       body: "<p>An <b>error</b> is a square where kNN's guess ≠ the truth f. The faint background is the truth again; every square kNN gets wrong is marked <b>✗</b>.</p>"
-          + "<p>Winning move: place dots so kNN's territory is the <b>opposite</b> of the background — <span class='bb'>blue</span> dots over the red side, <span class='rr'>red</span> dots over the blue side.</p>",
+          + "<p>Winning move: put <span class='bb'>🫐 blueberries</span> over tomato territory and <span class='rr'>🍅 tomatoes</span> over blueberry territory. kNN obediently copies the wrong lunch.</p>",
       demo: { show:true, showF:true, marks:true, meter:true, interactive:true, k:1, target:0.6,
               tools:['red','blue','reset'],
-              task:"GOAL: push the error to 60% or more. Drop opposite-colored dots across both halves." }
+              task:"GOAL: push the error to 60% or more. Drop the opposite snack across both halves." }
     },
     {
       title: 'Step 4 · Choose your opponent',
-      body: "<p>In the real game you face <span class='k'>1-NN</span>, <span class='k'>3-NN</span>, or <span class='k'>5-NN</span>. With <b>1-NN</b>, one dot flips a whole region — easy to fool. With <b>3/5-NN</b> a cell follows the <b>majority</b> of its nearest dots, so a lone dot does nothing; you need <b>clusters</b>.</p>"
+      body: "<p>In the real game you face <span class='k'>1-NN</span>, <span class='k'>3-NN</span>, or <span class='k'>5-NN</span>. With <b>1-NN</b>, one snack flips a whole region — easy to fool. With <b>3/5-NN</b> a cell follows the <b>majority</b> of its nearest snacks, so a lone berry or tomato does little; you need <b>clusters</b>.</p>"
           + "<p><b>Try it:</b> switch k below and feel how much harder the stronger learner is to break.</p>",
       demo: { show:true, showF:true, marks:true, meter:true, interactive:true, k:1, tools:['red','blue','k','reset'] }
     },
@@ -924,9 +922,7 @@ addLog(`Game start (Training mode). True function f = "${getCurrentFn().name}" �
     }
     for (const [key,cls] of Object.entries(mg.pts)){
       const a=key.split(','), r=+a[0], c=+a[1], x=c*cs+cs/2, y=r*cs+cs/2;
-      ctx.beginPath(); ctx.arc(x,y,cs*0.32,0,Math.PI*2);
-      ctx.fillStyle = cls==='red' ? '#ff5a4d' : '#4a82ff'; ctx.fill();
-      ctx.strokeStyle = cls==='red' ? '#ff8a80' : '#8fb0ff'; ctx.lineWidth=1.5; ctx.stroke();
+      drawFood(ctx, cls, x, y, cs*0.72);
     }
     if (s.meter){
       const e = mgError();
@@ -956,7 +952,7 @@ addLog(`Game start (Training mode). True function f = "${getCurrentFn().name}" �
       if (t==='red' || t==='blue'){
         const b = document.createElement('button');
         b.className = 'tool-btn' + (mg.tool===t ? (t==='red'?' active-red':' active-blue') : '');
-        b.textContent = t==='red' ? '+ Red' : '+ Blue';
+        b.textContent = t==='red' ? '+ 🍅 Tomato' : '+ 🫐 Blueberry';
         b.onclick = () => { mg.tool = t; buildTools(list); };
         wrap.appendChild(b);
       } else if (t==='k'){

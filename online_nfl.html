@@ -250,8 +250,8 @@ canvas#board{display:block; width:100%; height:100%; border:2.5px solid var(--in
       <div class="g-duel-panel" id="g-duel-panel" style="display:none">
         <div class="g-vote" id="g-vote"></div>
         <div class="g-commit-row">
-          <button class="commit-btn red" id="g-cred" onclick="gtDuelCommit('red')">true = RED</button>
-          <button class="commit-btn blue" id="g-cblue" onclick="gtDuelCommit('blue')">true = BLUE</button>
+          <button class="commit-btn red" id="g-cred" onclick="gtDuelCommit('red')">true = 🍅 TOMATO</button>
+          <button class="commit-btn blue" id="g-cblue" onclick="gtDuelCommit('blue')">true = 🫐 BLUEBERRY</button>
         </div>
       </div>
       <div class="g-task" id="g-task" style="display:none"></div>
@@ -299,10 +299,10 @@ canvas#board{display:block; width:100%; height:100%; border:2.5px solid var(--in
           <div class="vote-line" id="vote-line"></div>
           <div class="pred-line" id="pred-line"></div>
           <div class="commit-row">
-            <button class="commit-btn red" id="commit-red" onclick="commit('red')">true = RED</button>
-            <button class="commit-btn blue" id="commit-blue" onclick="commit('blue')">true = BLUE</button>
+            <button class="commit-btn red" id="commit-red" onclick="commit('red')">true = 🍅 TOMATO</button>
+            <button class="commit-btn blue" id="commit-blue" onclick="commit('blue')">true = 🫐 BLUEBERRY</button>
           </div>
-          <div class="tip">To force a mistake: pick the color <b>opposite</b> the prediction on a <b>split</b> cell (the minority — still backed by ≥1 hypothesis).</div>
+          <div class="tip">To force a mistake: pick the snack <b>opposite</b> the prediction on a <b>split</b> cell (the minority — still backed by ≥1 hypothesis).</div>
         </div>
       </div>
     </div>
@@ -323,7 +323,7 @@ canvas#board{display:block; width:100%; height:100%; border:2.5px solid var(--in
 
     <div class="nfl-box">
       <strong>Online No Free Lunch</strong><br>
-      Unconstrained f → "always answer the opposite" wins every round (the theorem, no skill).
+      Unconstrained f → "always answer the opposite" wins while fresh instances remain (forever when X is infinite).
       Constrain f to a class H → the most mistakes anyone can force is the <strong>Littlestone dimension</strong> Ldim(H) ≤ log₂|H|.
       Here |H| = 8, so the cap is <strong>3</strong>. Halving = the learner predicts the majority of surviving hypotheses; every mistake at least halves them.
     </div>
@@ -350,6 +350,17 @@ let S;
 
 const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
+
+function foodLabel(cls) { return cls === 'red' ? 'tomato' : 'blueberry'; }
+function foodEmoji(cls) { return cls === 'red' ? '🍅' : '🫐'; }
+function drawFood(ctx, cls, x, y, size) {
+  ctx.save();
+  ctx.font = `${size}px "Apple Color Emoji","Segoe UI Emoji",sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(foodEmoji(cls), x, y + size * 0.03);
+  ctx.restore();
+}
 
 function resize() {
   const w = document.getElementById('grid-wrap').clientWidth;
@@ -396,7 +407,7 @@ function commit(y) {
   if (mistake) S.mistakes++;
   // Prune the version space to hypotheses consistent with this answer.
   S.alive = S.alive.filter(i => hypotheses[i].fn(r,c) === y);
-  addLog(`r${S.rounds} (${r},${c}): pred ${v.pred} [${v.red}R/${v.blue}B], true ${y} → ${mistake ? '✗ MISTAKE' : '✓ no error'}; ${S.alive.length} alive`,
+  addLog(`r${S.rounds} (${r},${c}): pred ${foodLabel(v.pred)} [${v.red}🍅/${v.blue}🫐], true ${foodLabel(y)} → ${mistake ? '✗ MISTAKE' : '✓ no error'}; ${S.alive.length} alive`,
     mistake ? 'bad' : '');
   S.query = null;
   if (S.alive.length <= 1) finish();
@@ -428,6 +439,7 @@ function render() {
     if (committed) {
       ctx.fillStyle = committed === 'red' ? 'rgba(255,90,77,0.55)' : 'rgba(74,130,255,0.55)';
       ctx.fillRect(x,y,cs,cs);
+      drawFood(ctx, committed, x+cs/2, y+cs/2, cs*0.72);
     }
     ctx.strokeStyle = '#e7d3b0'; ctx.lineWidth = 0.5;
     ctx.strokeRect(x,y,cs,cs);
@@ -438,11 +450,7 @@ function render() {
     const v = vote(r,c);
     ctx.strokeStyle = '#ffb627'; ctx.lineWidth = 2.5;
     ctx.strokeRect(x+1, y+1, cs-2, cs-2);
-    ctx.beginPath();
-    ctx.arc(x+cs/2, y+cs/2, cs*0.26, 0, Math.PI*2);
-    ctx.fillStyle = v.pred === 'red' ? 'rgba(255,90,77,0.9)' : 'rgba(74,130,255,0.9)';
-    ctx.fill();
-    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5; ctx.stroke();
+    drawFood(ctx, v.pred, x+cs/2, y+cs/2, cs*0.78);
   }
   // Side panel
   document.getElementById('mistakes').textContent = S.mistakes;
@@ -464,9 +472,9 @@ function updateQueryBox() {
   const { r, c } = S.query;
   const v = vote(r,c);
   document.getElementById('vote-line').innerHTML =
-    `Cell (${r},${c}) — surviving votes: <b class="r">${v.red} red</b> / <b class="b">${v.blue} blue</b>`;
+    `Cell (${r},${c}) — surviving votes: <b class="r">${v.red} 🍅 tomato</b> / <b class="b">${v.blue} 🫐 blueberry</b>`;
   document.getElementById('pred-line').innerHTML =
-    `Halving predicts: <b style="color:${v.pred==='red'?'var(--red)':'var(--blue)'}">${v.pred.toUpperCase()}</b>` +
+    `Halving predicts: <b style="color:${v.pred==='red'?'var(--red)':'var(--blue)'}">${foodEmoji(v.pred)} ${foodLabel(v.pred).toUpperCase()}</b>` +
     (v.red===0||v.blue===0 ? ' &nbsp;<span style="color:var(--text3)">(unanimous — can\'t err here)</span>' : '');
   const cr = document.getElementById('commit-red'), cb = document.getElementById('commit-blue');
   cr.disabled = (v.red === 0);
@@ -519,7 +527,7 @@ function resetGame() {
 }
 
 document.getElementById('help').innerHTML =
-  '<b>How to play.</b> You are the adversary. Click an empty cell to pose a point; the learner shows its prediction (the dot). ' +
+  '<b>How to play.</b> You are the adversary. Click an empty cell to pose a point; the learner serves its prediction (🍅 or 🫐). ' +
   'Then declare the true label — but at least one hypothesis in H must still agree. ' +
   'A <b>mistake</b> happens when you answer opposite the prediction on a split cell. Each mistake halves the surviving set; collapse to 1 ends the duel.';
 
@@ -554,7 +562,7 @@ resize();
     },
     {
       title: 'Step 1 · One round',
-      body: "<p>Each round: you pose a point → the learner shows its <b>prediction</b> → you declare the <b>true label</b>. If they differ, that's a <b>mistake</b> for the learner.</p>"
+      body: "<p>Each round: you pose a point → the learner serves its <b>prediction</b> → you declare the <b>true label</b>. If 🍅 and 🫐 differ, that's a <b>mistake</b> for the learner.</p>"
           + "<p>Sounds trivial — just always answer the opposite, right? There's a catch…</p>"
     },
     {
@@ -565,18 +573,18 @@ resize();
     },
     {
       title: 'Step 3 · How to force a mistake',
-      body: "<p>The learner — <b>Halving</b> — predicts the <b>majority</b> vote of the surviving patterns. To make it err: find a <b>split</b> cell and answer the <b>minority</b> color. That answer is still legal (a pattern backs it), it's <b>opposite</b> the prediction (a mistake!), and it <b>kills the majority</b> — at least halving the survivors.</p>"
+      body: "<p>The learner — <b>Halving</b> — predicts the <b>majority</b> vote of the surviving patterns. To make it err: find a <b>split</b> cell and answer with the <b>minority snack</b>. That answer is still legal (a pattern backs it), it's <b>opposite</b> the prediction (a mistake!), and it <b>kills the majority</b> — at least halving the survivors.</p>"
     },
     {
       title: 'Step 4 · Your duel',
-      body: "<p>All 4 patterns are alive. <b>Goal: force 2 mistakes.</b> Click an empty cell to pose it, read the vote, then commit the <b>minority</b> color on a split cell. Watch the version space halve.</p>",
+      body: "<p>All 4 patterns are alive. <b>Goal: force 2 mistakes.</b> Click an empty cell to pose it, read the vote, then commit the <b>minority snack</b> on a split cell. Watch the version space halve.</p>",
       duel: true,
-      task: "GOAL: force 2 mistakes. Find cells where the surviving patterns disagree, then answer the minority color."
+      task: "GOAL: force 2 mistakes. Find cells where the surviving patterns disagree, then answer with the minority snack."
     },
     {
       title: 'Step 5 · Why 2 was the cap',
       body: "<p>Each mistake at least <b>halves</b> the survivors, so with |H| = 4 you can force at most <b>log₂4 = 2</b> mistakes. That number is the <b>Littlestone dimension</b> of H — the exact best the adversary can do.</p>"
-          + "<p>The real game uses <b>8</b> patterns → cap <b>3</b>. And if H were <b>unconstrained</b>, the cap is infinite — 'always flip' wins every round. That triviality <b>is</b> No Free Lunch, and it's exactly why the game must constrain H to be a game at all.</p>"
+          + "<p>The real game uses <b>8</b> patterns and has Ldim(H) = <b>3</b>. If H allowed every labeling, 'always flip' could win for every fresh point — forever when X is infinite. That triviality <b>is</b> online No Free Lunch, and it's exactly why the game constrains H enough to become a puzzle.</p>"
     },
     {
       title: "You're ready",
@@ -616,15 +624,17 @@ resize();
     ctx.clearRect(0,0,W,W);
     for (let r=0;r<MDG;r++) for (let c=0;c<MDG;c++){
       const x=c*cs, y=r*cs, v=duel.committed[r+','+c];
-      if (v){ ctx.fillStyle = v==='red' ? 'rgba(255,90,77,0.55)' : 'rgba(74,130,255,0.55)'; ctx.fillRect(x,y,cs,cs); }
+      if (v){
+        ctx.fillStyle = v==='red' ? 'rgba(255,90,77,0.55)' : 'rgba(74,130,255,0.55)';
+        ctx.fillRect(x,y,cs,cs);
+        drawFood(ctx, v, x+cs/2, y+cs/2, cs*0.7);
+      }
       ctx.strokeStyle = '#e7d3b0'; ctx.lineWidth = 0.5; ctx.strokeRect(x,y,cs,cs);
     }
     if (duel.query){
       const { r, c } = duel.query, x=c*cs, y=r*cs, v=dvote(r,c);
       ctx.strokeStyle = '#ffb627'; ctx.lineWidth = 2.5; ctx.strokeRect(x+1.5, y+1.5, cs-3, cs-3);
-      ctx.beginPath(); ctx.arc(x+cs/2, y+cs/2, cs*0.26, 0, Math.PI*2);
-      ctx.fillStyle = v.pred==='red' ? 'rgba(255,90,77,0.9)' : 'rgba(74,130,255,0.9)'; ctx.fill();
-      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+      drawFood(ctx, v.pred, x+cs/2, y+cs/2, cs*0.76);
     }
     document.getElementById('g-mk').textContent = duel.mistakes;
     document.getElementById('g-alive').textContent = duel.alive.length;
@@ -635,7 +645,7 @@ resize();
       cred.disabled = true; cblue.disabled = true;
     } else {
       const { r, c } = duel.query, v = dvote(r,c);
-      vote.innerHTML = `Votes: <b class='r'>${v.red} red</b> / <b class='b'>${v.blue} blue</b> → predicts <b>${v.pred.toUpperCase()}</b>`;
+      vote.innerHTML = `Votes: <b class='r'>${v.red} 🍅 tomato</b> / <b class='b'>${v.blue} 🫐 blueberry</b> → predicts <b>${foodEmoji(v.pred)} ${foodLabel(v.pred).toUpperCase()}</b>`;
       cred.disabled = (v.red === 0); cblue.disabled = (v.blue === 0);
     }
     const task = document.getElementById('g-task');
